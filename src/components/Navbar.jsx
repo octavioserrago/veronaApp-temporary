@@ -6,7 +6,7 @@ import { useNavigate } from 'react-router-dom';
 
 const navigation = [
     { name: 'Panel de control', path: '/dashboard', current: true },
-    { name: 'Ventas', path: '/sales', current: false },
+    { name: 'Ventas', path: '/ventas', current: false },
     { name: 'Planos', path: '/plans', current: false },
 ]
 
