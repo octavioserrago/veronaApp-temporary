@@ -5,9 +5,9 @@ import { useAuth } from '../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
 
 const navigation = [
-    { name: 'Panel de control', path: '/dashboard', current: true },
-    { name: 'Ventas', path: '/ventas', current: false },
-    { name: 'Planos', path: '/plans', current: false },
+    { name: 'Panel de control', path: '/dashboard' },
+    { name: 'Ventas', path: '/ventas' },
+    { name: 'Planos', path: '/plans' },
 ]
 
 function classNames(...classes) {
