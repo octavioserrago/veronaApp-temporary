@@ -20,6 +20,7 @@ const Sales = () => {
         status: '',
     });
     const [showForm, setShowForm] = useState(false);
+    const [editingSale, setEditingSale] = useState(null); // Nuevo estado
     const { logueado, user, logout } = useAuth();
     const navigate = useNavigate();
 
@@ -90,12 +91,19 @@ const Sales = () => {
 
     const handleSubmit = async (e) => {
         e.preventDefault();
+
         try {
-            await axios.post('http://localhost:3333/sales', form);
+            if (editingSale) {
+                await axios.put(`http://localhost:3333/sales/${editingSale}`, form);
+            } else {
+                await axios.post('http://localhost:3333/sales', form);
+            }
+
             setShowForm(false);
+            setEditingSale(null); // Resetear el estado de edición
             fetchSales();
         } catch (error) {
-            console.error('Error creating sale:', error);
+            console.error('Error al guardar la venta:', error);
         }
     };
 
@@ -113,8 +121,22 @@ const Sales = () => {
         }
     };
 
+    const handleEdit = (sale) => {
+        setForm({
+            branch_id: sale.branch_id,
+            customer_name: sale.customer_name,
+            details: sale.details,
+            payment_method: sale.payment_method,
+            total_amount: sale.total_amount,
+            total_money_entries: sale.total_money_entries,
+            status: sale.status,
+        });
+        setEditingSale(sale.sale_id);
+        setShowForm(true);
+    };
+
     const paymentMethods = ['Efectivo', 'Tarjeta de Crédito', 'Transferencia Bancaria'];
-    const statuses = ['En suspenso', 'En producción']; // Opciones para el estado
+    const statuses = ['En suspenso', 'En producción'];
 
     return (
         <div className="flex flex-col min-h-screen">
@@ -178,9 +200,9 @@ const Sales = () => {
                                     className="p-2 border border-gray-300 rounded-md"
                                     required
                                 >
-                                    <option value="">Selecciona un método de pago</option>
-                                    {paymentMethods.map((method, index) => (
-                                        <option key={index} value={method}>
+                                    <option value="">Seleccionar método de pago</option>
+                                    {paymentMethods.map((method) => (
+                                        <option key={method} value={method}>
                                             {method}
                                         </option>
                                     ))}
@@ -192,7 +214,6 @@ const Sales = () => {
                                     onChange={handleInputChange}
                                     placeholder="Monto Total"
                                     className="p-2 border border-gray-300 rounded-md"
-                                    step="0.01"
                                     required
                                 />
                                 <input
@@ -200,9 +221,9 @@ const Sales = () => {
                                     name="total_money_entries"
                                     value={form.total_money_entries}
                                     onChange={handleInputChange}
-                                    placeholder="Entradas de Dinero"
+                                    placeholder="Entradas de Dinero Totales"
                                     className="p-2 border border-gray-300 rounded-md"
-                                    step="0.01"
+                                    required
                                 />
                                 <select
                                     name="status"
@@ -211,84 +232,75 @@ const Sales = () => {
                                     className="p-2 border border-gray-300 rounded-md"
                                     required
                                 >
-                                    <option value="">Selecciona un estado</option>
-                                    {statuses.map((status, index) => (
-                                        <option key={index} value={status}>
+                                    <option value="">Seleccionar estado</option>
+                                    {statuses.map((status) => (
+                                        <option key={status} value={status}>
                                             {status}
                                         </option>
                                     ))}
                                 </select>
                             </div>
+
                             <button
                                 type="submit"
                                 className="py-2 px-4 text-white bg-blue-500 rounded-md hover:bg-blue-600"
                             >
-                                Guardar Venta
+                                {editingSale ? 'Guardar Cambios' : 'Guardar Venta'}
                             </button>
                         </form>
                     )}
 
-                    {loading ? (
-                        <p>Cargando...</p>
-                    ) : (
-                        <div className="overflow-x-auto">
-                            <table className="min-w-full divide-y divide-gray-200">
-                                <thead className="bg-gray-200">
+                    <div className="overflow-x-auto">
+                        {loading ? (
+                            <p>Cargando ventas...</p>
+                        ) : (
+                            <table className="min-w-full bg-white rounded-md shadow-md overflow-hidden">
+                                <thead>
                                     <tr>
-                                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">ID</th>
-                                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Sucursal</th>
-                                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Cliente</th>
-                                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Detalles</th>
-                                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Método de Pago</th>
-                                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Monto Total</th>
-                                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Entradas de Dinero</th>
-                                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Estado</th>
-                                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Creado</th>
-                                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actualizado</th>
-                                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Acciones</th> {/* Nueva columna */}
+                                        <th className="py-2 px-4 bg-gray-200">ID</th>
+                                        <th className="py-2 px-4 bg-gray-200">Cliente</th>
+                                        <th className="py-2 px-4 bg-gray-200">Detalles</th>
+                                        <th className="py-2 px-4 bg-gray-200">Método de Pago</th>
+                                        <th className="py-2 px-4 bg-gray-200">Monto Total</th>
+                                        <th className="py-2 px-4 bg-gray-200">Entradas de Dinero</th>
+                                        <th className="py-2 px-4 bg-gray-200">Estado</th>
+                                        <th className="py-2 px-4 bg-gray-200">Fecha de Creación</th>
+                                        <th className="py-2 px-4 bg-gray-200">Fecha de Actualización</th>
+                                        <th className="py-2 px-4 bg-gray-200">Acciones</th>
                                     </tr>
                                 </thead>
-                                <tbody className="bg-white divide-y divide-gray-200">
-                                    {Array.isArray(sales) && sales.length > 0 ? (
-                                        sales.map((sale) => (
-                                            <tr key={sale.sale_id}>
-                                                <td className="px-6 py-4 whitespace-nowrap">{sale.sale_id}</td>
-                                                <td className="px-6 py-4 whitespace-nowrap">{sale.branch_id}</td>
-                                                <td className="px-6 py-4 whitespace-nowrap">{sale.customer_name}</td>
-                                                <td className="px-6 py-4 whitespace-nowrap">{sale.details}</td>
-                                                <td className="px-6 py-4 whitespace-nowrap">{sale.payment_method}</td>
-                                                <td className="px-6 py-4 whitespace-nowrap">{sale.total_amount}</td>
-                                                <td className="px-6 py-4 whitespace-nowrap">{sale.total_money_entries}</td>
-                                                <td className="px-6 py-4 whitespace-nowrap">{sale.status}</td>
-                                                <td className="px-6 py-4 whitespace-nowrap">{new Date(sale.created_at).toLocaleDateString()}</td>
-                                                <td className="px-6 py-4 whitespace-nowrap">{new Date(sale.updated_at).toLocaleDateString()}</td>
-                                                <td className="px-6 py-4 whitespace-nowrap">
-                                                    <button
-                                                        onClick={() => console.log('Modificar', sale.sale_id)}
-                                                        className="py-1 px-2 text-white bg-yellow-500 rounded-md hover:bg-yellow-600 mr-2"
-                                                    >
-                                                        Modificar
-                                                    </button>
-                                                    <button
-                                                        onClick={() => handleDelete(sale.sale_id)}
-                                                        className="py-1 px-2 text-white bg-red-500 rounded-md hover:bg-red-600"
-                                                    >
-                                                        Borrar
-                                                    </button>
-                                                </td>
-                                            </tr>
-                                        ))
-                                    ) : (
-                                        <tr>
-                                            <td colSpan="11" className="px-6 py-4 whitespace-nowrap text-center">
-                                                No se encontraron ventas.
+                                <tbody>
+                                    {sales.map((sale) => (
+                                        <tr key={sale.sale_id}>
+                                            <td className="py-2 px-4 border-b">{sale.sale_id}</td>
+                                            <td className="py-2 px-4 border-b">{sale.customer_name}</td>
+                                            <td className="py-2 px-4 border-b">{sale.details}</td>
+                                            <td className="py-2 px-4 border-b">{sale.payment_method}</td>
+                                            <td className="py-2 px-4 border-b">{sale.total_amount}</td>
+                                            <td className="py-2 px-4 border-b">{sale.total_money_entries}</td>
+                                            <td className="py-2 px-4 border-b">{sale.status}</td>
+                                            <td className="py-2 px-4 border-b">{new Date(sale.created_at).toLocaleDateString()}</td>
+                                            <td className="py-2 px-4 border-b">{new Date(sale.updated_at).toLocaleDateString()}</td>
+                                            <td className="py-2 px-4 border-b">
+                                                <button
+                                                    onClick={() => handleEdit(sale)}
+                                                    className="py-1 px-2 text-white bg-yellow-500 rounded-md hover:bg-yellow-600 mr-2"
+                                                >
+                                                    Modificar
+                                                </button>
+                                                <button
+                                                    onClick={() => handleDelete(sale.sale_id)}
+                                                    className="py-1 px-2 text-white bg-red-500 rounded-md hover:bg-red-600"
+                                                >
+                                                    Borrar
+                                                </button>
                                             </td>
                                         </tr>
-                                    )}
+                                    ))}
                                 </tbody>
                             </table>
-                        </div>
-                    )}
+                        )}
+                    </div>
                 </div>
             </div>
         </div>
