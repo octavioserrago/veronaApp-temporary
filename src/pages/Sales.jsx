@@ -5,6 +5,7 @@ import Logo from '../assets/verona-escrito.png';
 import { useAuth } from '../context/AuthContext';
 import Navbar from '../components/Navbar';
 import { CiFilter } from 'react-icons/ci';
+import { IoRefreshCircleOutline } from 'react-icons/io5';
 
 const Sales = () => {
     const { branchId, logueado } = useAuth();
@@ -27,10 +28,10 @@ const Sales = () => {
         status: '',
         branch_id: branchId || '',
         complete_payment: '',
-        start_date: '',
-        end_date: '',
+        created_at: '',
     });
     const [branches, setBranches] = useState([]);
+    const [errorMessage, setErrorMessage] = useState('');
     const navigate = useNavigate();
 
     useEffect(() => {
@@ -46,15 +47,20 @@ const Sales = () => {
 
     const fetchSales = async () => {
         setLoading(true);
+        setErrorMessage('');
         try {
             const response = await axios.get('http://localhost:3333/sales', { params: filter });
             if (response.data.success && Array.isArray(response.data.results)) {
+                if (response.data.results.length === 0) {
+                    setErrorMessage('No hubo coincidencias en las ventas con esos filtros.');
+                }
                 setSales(response.data.results);
             } else {
-                console.error('Unexpected data format:', response.data);
+                setErrorMessage('Hubo un problema con los datos recibidos.');
                 setSales([]);
             }
         } catch (error) {
+            setErrorMessage('Error al obtener las ventas. Por favor, intenta de nuevo más tarde.');
             console.error('Error fetching sales:', error);
             setSales([]);
         } finally {
@@ -78,6 +84,8 @@ const Sales = () => {
     };
 
     const handleSearch = async () => {
+        setLoading(true);
+        setErrorMessage('');
         const isNumber = !isNaN(searchTerm);
         const route = isNumber
             ? `http://localhost:3333/sales/${searchTerm}`
@@ -86,13 +94,20 @@ const Sales = () => {
         try {
             const response = await axios.get(route);
             if (response.data.success) {
+                if (response.data.results && response.data.results.length === 0) {
+                    setErrorMessage('No hubo coincidencias en las ventas con esos filtros.');
+                }
                 setSales(isNumber ? [response.data.result] : response.data.results || []);
             } else {
+                setErrorMessage('No se encontraron ventas.');
                 setSales([]);
             }
         } catch (error) {
+            setErrorMessage('Error al buscar ventas. Por favor, intenta de nuevo más tarde.');
             console.error('Error searching sales:', error);
             setSales([]);
+        } finally {
+            setLoading(false);
         }
     };
 
@@ -118,7 +133,8 @@ const Sales = () => {
     };
 
     const handleDelete = async (sale_id) => {
-        if (window.confirm('Escribe "Borrar" para confirmar la eliminación:') === 'Borrar') {
+        const userConfirmation = window.prompt('Escribe "Borrar" para confirmar la eliminación:');
+        if (userConfirmation === 'Borrar') {
             try {
                 await axios.delete(`http://localhost:3333/sales/${sale_id}`);
                 fetchSales();
@@ -181,6 +197,12 @@ const Sales = () => {
                             >
                                 <CiFilter />
                             </button>
+                            <button
+                                onClick={fetchSales} // Llama a fetchSales para refrescar datos
+                                className="p-2 text-white bg-yellow-500 rounded-md hover:bg-yellow-600"
+                            >
+                                <IoRefreshCircleOutline />
+                            </button>
                             <input
                                 type="text"
                                 value={searchTerm}
@@ -216,6 +238,7 @@ const Sales = () => {
                                     onChange={handleInputChange}
                                     placeholder="Detalles"
                                     className="p-2 border border-gray-300 rounded-md w-full"
+                                    required
                                 />
                                 <select
                                     name="payment_method"
@@ -266,160 +289,142 @@ const Sales = () => {
                             </div>
                             <button
                                 type="submit"
-                                className="py-2 px-4 text-white bg-green-500 rounded-md hover:bg-green-600 w-full md:w-auto"
+                                className="py-2 px-4 text-white bg-green-500 rounded-md hover:bg-green-600 w-full"
                             >
-                                {editingSale ? 'Actualizar venta' : 'Crear venta'}
+                                {editingSale ? 'Guardar cambios' : 'Crear Venta'}
                             </button>
                         </form>
                     )}
 
+                    {errorMessage && (
+                        <div className="mb-4 p-4 bg-red-100 text-red-800 border border-red-300 rounded-md">
+                            {errorMessage}
+                        </div>
+                    )}
+
                     <div className="overflow-x-auto">
-                        <table className="min-w-full divide-y divide-gray-200">
+                        <table className="min-w-full bg-white">
                             <thead>
                                 <tr>
-                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">ID</th>
-                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Nombre del Cliente</th>
-                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Detalles</th>
-                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Método de Pago</th>
-                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Monto Total</th>
-                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Entradas de Dinero</th>
-                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Estado</th>
-                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Acciones</th>
+                                    <th className="px-6 py-3 text-xs font-medium text-gray-500 uppercase text-left">ID</th>
+                                    <th className="px-6 py-3 text-xs font-medium text-gray-500 uppercase text-left">Sucursal</th>
+                                    <th className="px-6 py-3 text-xs font-medium text-gray-500 uppercase text-left">Cliente</th>
+                                    <th className="px-6 py-3 text-xs font-medium text-gray-500 uppercase text-left">Monto Total</th>
+                                    <th className="px-6 py-3 text-xs font-medium text-gray-500 uppercase text-left">Estado</th>
+                                    <th className="px-6 py-3 text-xs font-medium text-gray-500 uppercase text-left">Acciones</th>
                                 </tr>
                             </thead>
-                            <tbody className="bg-white divide-y divide-gray-200">
+                            <tbody>
                                 {loading ? (
                                     <tr>
-                                        <td colSpan="8" className="text-center py-4">Cargando...</td>
+                                        <td colSpan="6" className="px-6 py-4 text-center text-gray-500">Cargando...</td>
                                     </tr>
                                 ) : sales.length > 0 ? (
                                     sales.map(sale => (
                                         <tr key={sale.sale_id}>
                                             <td className="px-6 py-4 whitespace-nowrap">{sale.sale_id}</td>
+                                            <td className="px-6 py-4 whitespace-nowrap">{sale.branch_id}</td>
                                             <td className="px-6 py-4 whitespace-nowrap">{sale.customer_name}</td>
-                                            <td className="px-6 py-4 whitespace-nowrap">{sale.details}</td>
-                                            <td className="px-6 py-4 whitespace-nowrap">{sale.payment_method}</td>
-                                            <td className="px-6 py-4 whitespace-nowrap">{sale.total_amount}</td>
-                                            <td className="px-6 py-4 whitespace-nowrap">{sale.total_money_entries}</td>
+                                            <td className="px-6 py-4 whitespace-nowrap">${sale.total_amount}</td>
                                             <td className="px-6 py-4 whitespace-nowrap">{sale.status}</td>
-                                            <td className="px-6 py-4 whitespace-nowrap flex space-x-2">
+                                            <td className="px-6 py-4 whitespace-nowrap">
                                                 <button
                                                     onClick={() => handleEdit(sale)}
-                                                    className="py-1 px-2 text-white bg-blue-500 rounded-md hover:bg-blue-600"
+                                                    className="text-blue-500 hover:text-blue-700 mr-2"
                                                 >
                                                     Editar
                                                 </button>
                                                 <button
                                                     onClick={() => handleDelete(sale.sale_id)}
-                                                    className="py-1 px-2 text-white bg-red-500 rounded-md hover:bg-red-600"
+                                                    className="text-red-500 hover:text-red-700"
                                                 >
-                                                    Borrar
+                                                    Eliminar
                                                 </button>
                                             </td>
                                         </tr>
                                     ))
                                 ) : (
                                     <tr>
-                                        <td colSpan="8" className="text-center py-4">No se encontraron ventas.</td>
+                                        <td colSpan="6" className="px-6 py-4 text-center text-gray-500">No se encontraron ventas.</td>
                                     </tr>
                                 )}
                             </tbody>
                         </table>
                     </div>
                 </div>
+            </div>
 
-                {showFilterModal && (
-                    <div className="fixed inset-0 flex items-center justify-center bg-gray-800 bg-opacity-75">
-                        <div className="bg-white p-6 rounded-lg shadow-lg w-11/12 md:w-1/3">
-                            <h2 className="text-lg font-semibold mb-4">Filtrar Ventas</h2>
-                            <div className="mb-4">
-                                <label htmlFor="status" className="block text-sm font-medium text-gray-700">Estado</label>
-                                <select
-                                    id="status"
-                                    name="status"
-                                    value={filter.status}
-                                    onChange={handleFilterChange}
-                                    className="mt-1 block w-full border-gray-300 rounded-md shadow-sm"
-                                >
-                                    <option value="">Todos</option>
-                                    {statuses.map(status => (
-                                        <option key={status} value={status}>
-                                            {status}
-                                        </option>
-                                    ))}
-                                </select>
-                            </div>
-                            <div className="mb-4">
-                                <label htmlFor="branch_id" className="block text-sm font-medium text-gray-700">Sucursal</label>
-                                <select
-                                    id="branch_id"
-                                    name="branch_id"
-                                    value={filter.branch_id}
-                                    onChange={handleFilterChange}
-                                    className="mt-1 block w-full border-gray-300 rounded-md shadow-sm"
-                                >
-                                    <option value="">Todas</option>
-                                    {branches.map(branch => (
-                                        <option key={branch} value={branch}>
-                                            {branch}
-                                        </option>
-                                    ))}
-                                </select>
-                            </div>
-                            <div className="mb-4">
-                                <label htmlFor="complete_payment" className="block text-sm font-medium text-gray-700">Pago Completo</label>
-                                <select
-                                    id="complete_payment"
-                                    name="complete_payment"
-                                    value={filter.complete_payment}
-                                    onChange={handleFilterChange}
-                                    className="mt-1 block w-full border-gray-300 rounded-md shadow-sm"
-                                >
-                                    <option value="">Todos</option>
-                                    <option value="true">Sí</option>
-                                    <option value="false">No</option>
-                                </select>
-                            </div>
-                            <div className="mb-4">
-                                <label htmlFor="start_date" className="block text-sm font-medium text-gray-700">Fecha de Inicio</label>
-                                <input
-                                    id="start_date"
-                                    name="start_date"
-                                    type="date"
-                                    value={filter.start_date}
-                                    onChange={handleFilterChange}
-                                    className="mt-1 block w-full border-gray-300 rounded-md shadow-sm"
-                                />
-                            </div>
-                            <div className="mb-4">
-                                <label htmlFor="end_date" className="block text-sm font-medium text-gray-700">Fecha de Fin</label>
-                                <input
-                                    id="end_date"
-                                    name="end_date"
-                                    type="date"
-                                    value={filter.end_date}
-                                    onChange={handleFilterChange}
-                                    className="mt-1 block w-full border-gray-300 rounded-md shadow-sm"
-                                />
-                            </div>
-                            <div className="flex justify-end">
-                                <button
-                                    onClick={applyFilters}
-                                    className="py-2 px-4 text-white bg-blue-500 rounded-md hover:bg-blue-600"
-                                >
-                                    Aplicar Filtros
-                                </button>
-                                <button
-                                    onClick={() => setShowFilterModal(false)}
-                                    className="ml-2 py-2 px-4 text-white bg-gray-500 rounded-md hover:bg-gray-600"
-                                >
-                                    Cancelar
-                                </button>
-                            </div>
+            {showFilterModal && (
+                <div className="fixed inset-0 flex items-center justify-center z-50">
+                    <div className="bg-white p-6 rounded-lg shadow-lg">
+                        <h2 className="text-lg font-medium mb-4">Filtrar Ventas</h2>
+
+                        <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+                            <select
+                                name="status"
+                                value={filter.status}
+                                onChange={handleFilterChange}
+                                className="p-2 border border-gray-300 rounded-md"
+                            >
+                                <option value="">Seleccionar estado</option>
+                                {statuses.map(status => (
+                                    <option key={status} value={status}>
+                                        {status}
+                                    </option>
+                                ))}
+                            </select>
+
+                            <select
+                                name="branch_id"
+                                value={filter.branch_id}
+                                onChange={handleFilterChange}
+                                className="p-2 border border-gray-300 rounded-md"
+                            >
+                                <option value="">Seleccionar sucursal</option>
+                                {branches.map(branch => (
+                                    <option key={branch} value={branch}>
+                                        {branch}
+                                    </option>
+                                ))}
+                            </select>
+
+                            <select
+                                name="complete_payment"
+                                value={filter.complete_payment}
+                                onChange={handleFilterChange}
+                                className="p-2 border border-gray-300 rounded-md"
+                            >
+                                <option value="">Seleccionar estado de pago</option>
+                                <option value="true">Pago Completo</option>
+                                <option value="false">Pago Incompleto</option>
+                            </select>
+
+                            <input
+                                type="date"
+                                name="created_at"
+                                value={filter.created_at}
+                                onChange={handleFilterChange}
+                                className="p-2 border border-gray-300 rounded-md"
+                            />
+                        </div>
+
+                        <div className="mt-6 flex justify-end space-x-4">
+                            <button
+                                onClick={() => setShowFilterModal(false)}
+                                className="py-2 px-4 bg-gray-300 rounded-md hover:bg-gray-400"
+                            >
+                                Cancelar
+                            </button>
+                            <button
+                                onClick={applyFilters}
+                                className="py-2 px-4 bg-blue-500 text-white rounded-md hover:bg-blue-600"
+                            >
+                                Aplicar
+                            </button>
                         </div>
                     </div>
-                )}
-            </div>
+                </div>
+            )}
         </div>
     );
 };
