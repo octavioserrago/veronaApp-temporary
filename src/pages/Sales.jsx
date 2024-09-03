@@ -17,8 +17,8 @@ const Sales = () => {
         customer_name: '',
         details: '',
         payment_method: '',
-        total_amount: '',
         total_money_entries: '',
+        total_amount: '',
         status: '',
     });
     const [showForm, setShowForm] = useState(false);
@@ -41,18 +41,19 @@ const Sales = () => {
     }, [logueado, navigate]);
 
     useEffect(() => {
-        fetchSales();
         fetchBranches();
-    }, [filter]);
+        fetchSales(); // Llama a fetchSales para obtener todas las ventas al cargar
+    }, []);
 
     const fetchSales = async () => {
         setLoading(true);
         setErrorMessage('');
+
         try {
-            const response = await axios.get('http://localhost:3333/sales', { params: filter });
+            const response = await axios.get('http://localhost:3333/sales');
             if (response.data.success && Array.isArray(response.data.results)) {
                 if (response.data.results.length === 0) {
-                    setErrorMessage('No hubo coincidencias en las ventas con esos filtros.');
+                    setErrorMessage('No hubo ventas para mostrar.');
                 }
                 setSales(response.data.results);
             } else {
@@ -95,7 +96,7 @@ const Sales = () => {
             const response = await axios.get(route);
             if (response.data.success) {
                 if (response.data.results && response.data.results.length === 0) {
-                    setErrorMessage('No hubo coincidencias en las ventas con esos filtros.');
+                    setErrorMessage('No hubo coincidencias en las ventas con esa búsqueda.');
                 }
                 setSales(isNumber ? [response.data.result] : response.data.results || []);
             } else {
@@ -126,7 +127,7 @@ const Sales = () => {
             }
             setShowForm(false);
             setEditingSale(null);
-            fetchSales();
+            fetchSales(); // Actualiza la lista de ventas después de crear o editar
         } catch (error) {
             console.error('Error saving sale:', error);
         }
@@ -152,8 +153,8 @@ const Sales = () => {
             customer_name: sale.customer_name,
             details: sale.details,
             payment_method: sale.payment_method,
-            total_amount: sale.total_amount,
             total_money_entries: sale.total_money_entries,
+            total_amount: sale.total_amount,
             status: sale.status,
         });
         setEditingSale(sale.sale_id);
@@ -165,10 +166,43 @@ const Sales = () => {
         setFilter(prevFilter => ({ ...prevFilter, [name]: value }));
     };
 
-    const applyFilters = () => {
-        fetchSales();
+    const applyFilters = async () => {
+        setLoading(true);
+        setErrorMessage('');
+
+        // Construye la URL con los parámetros en la ruta
+        let url = `http://localhost:3333/sales/filter`;
+
+        const params = [];
+
+        if (filter.status) params.push(encodeURIComponent(filter.status));
+        if (filter.branch_id) params.push(filter.branch_id);
+        if (filter.complete_payment) params.push(filter.complete_payment);
+        if (filter.created_at) params.push(filter.created_at);
+
+        if (params.length > 0) {
+            url += `/${params.join('/')}`;
+        }
+
+        try {
+            const response = await axios.get(url);
+            if (response.data.success) {
+                setSales(response.data.results);
+            } else {
+                setErrorMessage(response.data.message);
+                setSales([]);
+            }
+        } catch (error) {
+            setErrorMessage('Error al obtener las ventas. Por favor, intenta de nuevo más tarde.');
+            console.error('Error fetching sales with filters:', error);
+            setSales([]);
+        } finally {
+            setLoading(false);
+        }
+
         setShowFilterModal(false);
     };
+
 
     const paymentMethods = ['Efectivo', 'Tarjeta de Crédito', 'Transferencia Bancaria'];
     const statuses = ['En suspenso', 'En producción', 'Terminado sin entregar', 'Entregado'];
@@ -198,7 +232,7 @@ const Sales = () => {
                                 <CiFilter />
                             </button>
                             <button
-                                onClick={fetchSales} // Llama a fetchSales para refrescar datos
+                                onClick={fetchSales}
                                 className="p-2 text-white bg-yellow-500 rounded-md hover:bg-yellow-600"
                             >
                                 <IoRefreshCircleOutline />
@@ -268,7 +302,7 @@ const Sales = () => {
                                     name="total_money_entries"
                                     value={form.total_money_entries}
                                     onChange={handleInputChange}
-                                    placeholder="Entradas de Dinero"
+                                    placeholder="Seña del Cliente"
                                     className="p-2 border border-gray-300 rounded-md w-full"
                                     required
                                 />
@@ -308,7 +342,9 @@ const Sales = () => {
                                 <tr>
                                     <th className="px-6 py-3 text-xs font-medium text-gray-500 uppercase text-left">ID</th>
                                     <th className="px-6 py-3 text-xs font-medium text-gray-500 uppercase text-left">Sucursal</th>
+                                    <th className="px-6 py-3 text-xs font-medium text-gray-500 uppercase text-left">Fecha</th>
                                     <th className="px-6 py-3 text-xs font-medium text-gray-500 uppercase text-left">Cliente</th>
+                                    <th className="px-6 py-3 text-xs font-medium text-gray-500 uppercase text-left">Dinero del Cliente Cobrado</th>
                                     <th className="px-6 py-3 text-xs font-medium text-gray-500 uppercase text-left">Monto Total</th>
                                     <th className="px-6 py-3 text-xs font-medium text-gray-500 uppercase text-left">Estado</th>
                                     <th className="px-6 py-3 text-xs font-medium text-gray-500 uppercase text-left">Acciones</th>
@@ -317,14 +353,18 @@ const Sales = () => {
                             <tbody>
                                 {loading ? (
                                     <tr>
-                                        <td colSpan="6" className="px-6 py-4 text-center text-gray-500">Cargando...</td>
+                                        <td colSpan="7" className="px-6 py-4 text-center text-gray-500">Cargando...</td>
                                     </tr>
                                 ) : sales.length > 0 ? (
                                     sales.map(sale => (
                                         <tr key={sale.sale_id}>
                                             <td className="px-6 py-4 whitespace-nowrap">{sale.sale_id}</td>
                                             <td className="px-6 py-4 whitespace-nowrap">{sale.branch_id}</td>
+                                            <td className="px-6 py-4 whitespace-nowrap">
+                                                {new Date(sale.created_at).toLocaleString('es-ES', { dateStyle: 'short', timeStyle: 'short' })}
+                                            </td>
                                             <td className="px-6 py-4 whitespace-nowrap">{sale.customer_name}</td>
+                                            <td className="px-6 py-4 whitespace-nowrap">${sale.total_money_entries}</td>
                                             <td className="px-6 py-4 whitespace-nowrap">${sale.total_amount}</td>
                                             <td className="px-6 py-4 whitespace-nowrap">{sale.status}</td>
                                             <td className="px-6 py-4 whitespace-nowrap">
@@ -345,7 +385,7 @@ const Sales = () => {
                                     ))
                                 ) : (
                                     <tr>
-                                        <td colSpan="6" className="px-6 py-4 text-center text-gray-500">No se encontraron ventas.</td>
+                                        <td colSpan="7" className="px-6 py-4 text-center text-gray-500">No se encontraron ventas.</td>
                                     </tr>
                                 )}
                             </tbody>
