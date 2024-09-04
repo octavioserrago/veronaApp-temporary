@@ -42,7 +42,7 @@ const Sales = () => {
 
     useEffect(() => {
         fetchBranches();
-        fetchSales(); // Llama a fetchSales para obtener todas las ventas al cargar
+        fetchSales();
     }, []);
 
     const fetchSales = async () => {
@@ -170,19 +170,17 @@ const Sales = () => {
         setLoading(true);
         setErrorMessage('');
 
-        // Construye la URL con los parámetros en la ruta
         let url = `http://localhost:3333/sales/filter`;
 
-        const params = [];
+        const params = [
+            filter.status ? encodeURIComponent(filter.status) : '',
+            filter.branch_id || '',
+            filter.complete_payment || '',
+            filter.created_at || ''
+        ];
 
-        if (filter.status) params.push(encodeURIComponent(filter.status));
-        if (filter.branch_id) params.push(filter.branch_id);
-        if (filter.complete_payment) params.push(filter.complete_payment);
-        if (filter.created_at) params.push(filter.created_at);
-
-        if (params.length > 0) {
-            url += `/${params.join('/')}`;
-        }
+        url += `/${params.join('/')}`;
+        console.log('Final URL:', url);
 
         try {
             const response = await axios.get(url);
@@ -205,7 +203,7 @@ const Sales = () => {
 
 
     const paymentMethods = ['Efectivo', 'Tarjeta de Crédito', 'Transferencia Bancaria'];
-    const statuses = ['En suspenso', 'En producción', 'Terminado sin entregar', 'Entregado'];
+    const statuses = ['En suspenso', 'En produccion', 'Terminado sin entregar', 'Entregado'];
 
     return (
         <div className="flex flex-col min-h-screen">

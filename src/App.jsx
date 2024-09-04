@@ -4,6 +4,8 @@ import Login from './pages/Login';
 import Dashboard from './pages/Dashboard';
 import { AuthProvider } from './context/AuthContext';
 import Sales from './pages/Sales';
+import Profile from './pages/Profile';
+import Blueprints from './pages/Blueprints';
 
 function App() {
   return (
@@ -13,6 +15,8 @@ function App() {
           <Route path="/" element={<Login />} />
           <Route path="/dashboard" element={<Dashboard />} />
           <Route path="/ventas" element={<Sales />} />
+          <Route path="/perfil" element={<Profile />} />
+          <Route path="/planos" element={<Blueprints />} />
         </Routes>
       </BrowserRouter>
     </AuthProvider>
