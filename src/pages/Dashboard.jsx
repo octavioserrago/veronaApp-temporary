@@ -59,33 +59,36 @@ const Dashboard = () => {
 
                     <p className="mb-4">Este es el panel de control.</p>
 
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div className="bg-gray-300 text-black p-6 rounded-lg shadow-md">
-                            <h2 className="text-lg font-semibold mb-2 text-green-800">Dólar Oficial</h2>
-                            {dolarOficial ? (
-                                <>
-                                    <p>Compra: ${dolarOficial.compra}</p>
-                                    <p>Venta: ${dolarOficial.venta}</p>
-                                    <p className="text-sm mt-2">Última actualización: {dolarOficial.fechaActualizacion}</p>
-                                </>
-                            ) : (
-                                <p>Cargando...</p>
-                            )}
-                        </div>
+                    <div className="max-w-4xl mx-auto p-4">
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div className="bg-gray-300 text-black p-6 rounded-lg shadow-lg hover:shadow-xl transition-shadow duration-300">
+                                <h2 className="text-xl font-bold mb-3 text-green-800">Dólar Oficial</h2>
+                                {dolarOficial ? (
+                                    <>
+                                        <p className="text-lg">Compra: <span className="font-medium">${dolarOficial.compra}</span></p>
+                                        <p className="text-lg">Venta: <span className="font-medium">${dolarOficial.venta}</span></p>
+                                        <p className="text-sm mt-3 text-gray-700">Última actualización: {dolarOficial.fechaActualizacion}</p>
+                                    </>
+                                ) : (
+                                    <p>Cargando...</p>
+                                )}
+                            </div>
 
-                        <div className="bg-gray-600 text-white p-6 rounded-lg shadow-md">
-                            <h2 className="text-lg font-semibold mb-2">Dólar Blue</h2>
-                            {dolarBlue ? (
-                                <>
-                                    <p>Compra: ${dolarBlue.compra}</p>
-                                    <p>Venta: ${dolarBlue.venta}</p>
-                                    <p className="text-sm mt-2">Última actualización: {dolarBlue.fechaActualizacion}</p>
-                                </>
-                            ) : (
-                                <p>Cargando...</p>
-                            )}
+                            <div className="bg-gray-700 text-white p-6 rounded-lg shadow-lg hover:shadow-xl transition-shadow duration-300">
+                                <h2 className="text-xl font-bold mb-3">Dólar Blue</h2>
+                                {dolarBlue ? (
+                                    <>
+                                        <p className="text-lg">Compra: <span className="font-medium">${dolarBlue.compra}</span></p>
+                                        <p className="text-lg">Venta: <span className="font-medium">${dolarBlue.venta}</span></p>
+                                        <p className="text-sm mt-3 text-gray-300">Última actualización: {dolarBlue.fechaActualizacion}</p>
+                                    </>
+                                ) : (
+                                    <p>Cargando...</p>
+                                )}
+                            </div>
                         </div>
                     </div>
+
 
                     <button
                         onClick={handleLogout}
