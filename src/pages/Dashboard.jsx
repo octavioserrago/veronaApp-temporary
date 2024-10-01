@@ -56,9 +56,6 @@ const Dashboard = () => {
                     <div className="text-center mb-4">
                         <img src={Logo} alt="Logo" className="mx-auto mb-4" />
                     </div>
-
-                    <p className="mb-4">Este es el panel de control.</p>
-
                     <div className="max-w-4xl mx-auto p-4">
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                             <div className="bg-gray-300 text-black p-6 rounded-lg shadow-lg hover:shadow-xl transition-shadow duration-300">

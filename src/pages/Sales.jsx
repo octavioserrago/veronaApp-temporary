@@ -127,7 +127,7 @@ const Sales = () => {
             }
             setShowForm(false);
             setEditingSale(null);
-            fetchSales(); // Actualiza la lista de ventas después de crear o editar
+            fetchSales();
         } catch (error) {
             console.error('Error saving sale:', error);
         }
@@ -160,6 +160,21 @@ const Sales = () => {
         setEditingSale(sale.sale_id);
         setShowForm(true);
     };
+
+    const handleVerPlanos = async (saleId) => {
+        try {
+            const response = await fetch(`http://localhost:3333/blueprints/${saleId}`);
+            if (!response.ok) {
+                throw new Error('Error al obtener los planos');
+            }
+            const photos = await response.json();
+            console.log(photos);
+        } catch (error) {
+            console.error('Error:', error);
+        }
+    };
+
+
 
     const handleFilterChange = (e) => {
         const { name, value } = e.target;
@@ -378,6 +393,9 @@ const Sales = () => {
                                                 >
                                                     Eliminar
                                                 </button>
+
+                                                <button onClick={() => handleVerPlanos(sale.sale_id)} className="text-green-500 hover:underline ml-2">Ver Planos</button>
+
                                             </td>
                                         </tr>
                                     ))
