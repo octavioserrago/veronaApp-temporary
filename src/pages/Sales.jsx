@@ -33,6 +33,10 @@ const Sales = () => {
     const [branches, setBranches] = useState([]);
     const [errorMessage, setErrorMessage] = useState('');
     const navigate = useNavigate();
+    const [blueprintDetails, setBlueprintDetails] = useState([]);
+    const [blueprintPhotos, setBlueprintPhotos] = useState([]);
+    const [showBlueprintModal, setShowBlueprintModal] = useState(false);
+
 
     useEffect(() => {
         if (!logueado) {
@@ -163,17 +167,29 @@ const Sales = () => {
 
     const handleVerPlanos = async (saleId) => {
         try {
-            const response = await fetch(`http://localhost:3333/blueprints/${saleId}`);
-            if (!response.ok) {
-                throw new Error('Error al obtener los planos');
+            const detailsResponse = await axios.get(`http://localhost:3333/blueprints/sales/${saleId}`);
+            const photosResponse = await axios.get(`http://localhost:3333/blueprints/sales/photos/${saleId}`);
+
+            if (detailsResponse.data.success && photosResponse.data.success) {
+                setBlueprintDetails(detailsResponse.data.results);
+                setBlueprintPhotos(photosResponse.data.results);
+            } else {
+                setBlueprintDetails([]);
+                setBlueprintPhotos([]);
             }
-            const photos = await response.json();
-            console.log(photos);
+
+            setShowBlueprintModal(true);
         } catch (error) {
-            console.error('Error:', error);
+            console.error('Error al obtener los planos:', error);
         }
     };
 
+
+    const handleCloseModal = () => {
+        setShowBlueprintModal(false);
+        setBlueprintDetails([]);
+        setBlueprintPhotos([]);
+    };
 
 
     const handleFilterChange = (e) => {
@@ -410,78 +426,127 @@ const Sales = () => {
                 </div>
             </div>
 
-            {showFilterModal && (
-                <div className="fixed inset-0 flex items-center justify-center z-50">
+            {/* Modal para mostrar los planos */}
+            {showBlueprintModal && (
+                <div className="fixed inset-0 flex items-center justify-center z-50 bg-black bg-opacity-50">
                     <div className="bg-white p-6 rounded-lg shadow-lg">
-                        <h2 className="text-lg font-medium mb-4">Filtrar Ventas</h2>
+                        <h2 className="text-lg font-medium mb-4">Detalles de Planos</h2>
 
-                        <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-                            <select
-                                name="status"
-                                value={filter.status}
-                                onChange={handleFilterChange}
-                                className="p-2 border border-gray-300 rounded-md"
-                            >
-                                <option value="">Seleccionar estado</option>
-                                {statuses.map(status => (
-                                    <option key={status} value={status}>
-                                        {status}
-                                    </option>
+                        {/* Sección de detalles */}
+                        <div className="mb-4">
+                            <h3 className="font-medium">Detalles:</h3>
+                            <ul>
+                                {blueprintDetails.map(detail => (
+                                    <React.Fragment key={detail.id}>
+                                        <li>{detail.description}</li>
+                                    </React.Fragment>
                                 ))}
-                            </select>
-
-                            <select
-                                name="branch_id"
-                                value={filter.branch_id}
-                                onChange={handleFilterChange}
-                                className="p-2 border border-gray-300 rounded-md"
-                            >
-                                <option value="">Seleccionar sucursal</option>
-                                {branches.map(branch => (
-                                    <option key={branch} value={branch}>
-                                        {branch}
-                                    </option>
-                                ))}
-                            </select>
-
-                            <select
-                                name="complete_payment"
-                                value={filter.complete_payment}
-                                onChange={handleFilterChange}
-                                className="p-2 border border-gray-300 rounded-md"
-                            >
-                                <option value="">Seleccionar estado de pago</option>
-                                <option value="true">Pago Completo</option>
-                                <option value="false">Pago Incompleto</option>
-                            </select>
-
-                            <input
-                                type="date"
-                                name="created_at"
-                                value={filter.created_at}
-                                onChange={handleFilterChange}
-                                className="p-2 border border-gray-300 rounded-md"
-                            />
+                            </ul>
                         </div>
 
-                        <div className="mt-6 flex justify-end space-x-4">
-                            <button
-                                onClick={() => setShowFilterModal(false)}
-                                className="py-2 px-4 bg-gray-300 rounded-md hover:bg-gray-400"
-                            >
-                                Cancelar
-                            </button>
-                            <button
-                                onClick={applyFilters}
-                                className="py-2 px-4 bg-blue-500 text-white rounded-md hover:bg-blue-600"
-                            >
-                                Aplicar
-                            </button>
-                        </div>
+                        {/* Sección de planos */}
+                        {blueprintPhotos.length > 0 ? (
+                            <div className="mb-4">
+                                <h3 className="font-medium">Planos:</h3>
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+                                    {blueprintPhotos.map((photo, index) => (
+                                        <a
+                                            key={index} // Usa index si no tienes un id único para cada elemento
+                                            href={photo.photo_url} // Aquí usamos photo.photo_url
+                                            target="_blank"
+                                            rel="noopener noreferrer"
+                                            className="text-blue-500 hover:underline"
+                                        >
+                                            {blueprintDetails[index]?.blueprintCode || `Plano ${index + 1}`} {/* Código del plano o texto por defecto */}
+                                        </a>
+                                    ))}
+                                </div>
+                            </div>
+                        ) : (
+                            <div className="mb-4">
+                                <p className="text-red-500">No hay planos linkeados.</p>
+                            </div>
+                        )}
+
+                        <button onClick={handleCloseModal} className="mt-4 py-2 px-4 bg-blue-500 text-white rounded-md hover:bg-blue-600">Cerrar</button>
                     </div>
                 </div>
             )}
-        </div>
+
+            {
+                showFilterModal && (
+                    <div className="fixed inset-0 flex items-center justify-center z-50">
+                        <div className="bg-white p-6 rounded-lg shadow-lg">
+                            <h2 className="text-lg font-medium mb-4">Filtrar Ventas</h2>
+
+                            <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+                                <select
+                                    name="status"
+                                    value={filter.status}
+                                    onChange={handleFilterChange}
+                                    className="p-2 border border-gray-300 rounded-md"
+                                >
+                                    <option value="">Seleccionar estado</option>
+                                    {statuses.map(status => (
+                                        <option key={status} value={status}>
+                                            {status}
+                                        </option>
+                                    ))}
+                                </select>
+
+                                <select
+                                    name="branch_id"
+                                    value={filter.branch_id}
+                                    onChange={handleFilterChange}
+                                    className="p-2 border border-gray-300 rounded-md"
+                                >
+                                    <option value="">Seleccionar sucursal</option>
+                                    {branches.map(branch => (
+                                        <option key={branch} value={branch}>
+                                            {branch}
+                                        </option>
+                                    ))}
+                                </select>
+
+                                <select
+                                    name="complete_payment"
+                                    value={filter.complete_payment}
+                                    onChange={handleFilterChange}
+                                    className="p-2 border border-gray-300 rounded-md"
+                                >
+                                    <option value="">Seleccionar estado de pago</option>
+                                    <option value="true">Pago Completo</option>
+                                    <option value="false">Pago Incompleto</option>
+                                </select>
+
+                                <input
+                                    type="date"
+                                    name="created_at"
+                                    value={filter.created_at}
+                                    onChange={handleFilterChange}
+                                    className="p-2 border border-gray-300 rounded-md"
+                                />
+                            </div>
+
+                            <div className="mt-6 flex justify-end space-x-4">
+                                <button
+                                    onClick={() => setShowFilterModal(false)}
+                                    className="py-2 px-4 bg-gray-300 rounded-md hover:bg-gray-400"
+                                >
+                                    Cancelar
+                                </button>
+                                <button
+                                    onClick={applyFilters}
+                                    className="py-2 px-4 bg-blue-500 text-white rounded-md hover:bg-blue-600"
+                                >
+                                    Aplicar
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                )
+            }
+        </div >
     );
 };
 
