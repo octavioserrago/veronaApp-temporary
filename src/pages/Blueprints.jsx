@@ -1,7 +1,9 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Navbar from '../components/Navbar';
+import { useAuth } from '../context/AuthContext';
 
 const Blueprints = () => {
+    const { branchId, logueado } = useAuth();
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [modalType, setModalType] = useState('');
     const [formData, setFormData] = useState({
@@ -10,9 +12,12 @@ const Blueprints = () => {
         description: '',
         material: '',
         colour: '',
-        photo_url: '', // Nuevo campo para la URL de la foto
+        photo_url: '',
+        blueprint_id: '',
     });
     const [notification, setNotification] = useState({ message: '', type: '' });
+    const [blueprints, setBlueprints] = useState([]);
+    const [isBlueprintListOpen, setIsBlueprintListOpen] = useState(false);
 
     const openModal = (type) => {
         setModalType(type);
@@ -28,7 +33,8 @@ const Blueprints = () => {
             description: '',
             material: '',
             colour: '',
-            photo_url: '', // Reiniciar el campo de foto
+            photo_url: '',
+            blueprint_id: '',
         });
     };
 
@@ -42,6 +48,7 @@ const Blueprints = () => {
 
     const handleAction = async () => {
         if (modalType === 'Crear nuevo plano') {
+            // Lógica para crear un nuevo plano
             try {
                 const response = await fetch('http://localhost:3333/blueprints', {
                     method: 'POST',
@@ -52,11 +59,9 @@ const Blueprints = () => {
                 });
 
                 const result = await response.json();
-                console.log('Response:', response);
-                console.log('Result:', result);
-
                 if (response.ok) {
                     setNotification({ message: 'Plano creado exitosamente!', type: 'success' });
+                    await fetchBlueprints(); // Actualiza la lista de planos
                 } else {
                     setNotification({ message: `Error: ${result.message || 'Error desconocido'}`, type: 'error' });
                 }
@@ -78,9 +83,6 @@ const Blueprints = () => {
                 });
 
                 const result = await response.json();
-                console.log('Response:', response);
-                console.log('Result:', result);
-
                 if (response.ok) {
                     setNotification({ message: 'Foto cargada exitosamente!', type: 'success' });
                 } else {
@@ -90,23 +92,90 @@ const Blueprints = () => {
                 console.error('Error al cargar foto:', error);
                 setNotification({ message: 'Ocurrió un error al cargar la foto.', type: 'error' });
             }
+        } else if (modalType === 'Modificar datos de un plano') {
+            try {
+                const response = await fetch(`http://localhost:3333/blueprints/${formData.blueprint_id}`, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        sale_id: formData.sale_id,
+                        blueprintCode: formData.blueprintCode,
+                        description: formData.description,
+                        material: formData.material,
+                        colour: formData.colour,
+                    }),
+                });
+
+                const result = await response.json();
+                if (response.ok) {
+                    setNotification({ message: 'Plano actualizado exitosamente!', type: 'success' });
+                    await fetchBlueprints(); // Actualiza la lista de planos
+                } else {
+                    setNotification({ message: `Error: ${result.message || 'Error desconocido'}`, type: 'error' });
+                }
+            } catch (error) {
+                console.error('Error al actualizar plano:', error);
+                setNotification({ message: 'Ocurrió un error al actualizar el plano.', type: 'error' });
+            }
+        } else if (modalType === 'Eliminar un plano') {
+            try {
+                const response = await fetch(`http://localhost:3333/blueprints/${formData.blueprint_id}`, {
+                    method: 'DELETE',
+                });
+
+                if (response.ok) {
+                    setNotification({ message: 'Plano eliminado exitosamente!', type: 'success' });
+                    await fetchBlueprints(); // Actualiza la lista de planos
+                } else {
+                    const result = await response.json();
+                    setNotification({ message: `Error: ${result.message || 'Error desconocido'}`, type: 'error' });
+                }
+            } catch (error) {
+                console.error('Error al eliminar plano:', error);
+                setNotification({ message: 'Ocurrió un error al eliminar el plano.', type: 'error' });
+            }
         }
         closeModal();
     };
+
+    const fetchBlueprints = async () => {
+        try {
+            const response = await fetch('http://localhost:3333/blueprints');
+            const data = await response.json();
+            if (data.success && Array.isArray(data.results)) {
+                setBlueprints(data.results);
+            } else {
+                throw new Error('La respuesta no contiene un array de resultados');
+            }
+        } catch (error) {
+            console.error('Error al obtener planos:', error);
+            setNotification({ message: 'Ocurrió un error al obtener los planos.', type: 'error' });
+        }
+    };
+
+    useEffect(() => {
+        fetchBlueprints();
+    }, []);
 
     const closeNotification = () => {
         setNotification({ message: '', type: '' });
     };
 
-    React.useEffect(() => {
+    useEffect(() => {
         if (notification.message) {
             const timer = setTimeout(closeNotification, 3000);
             return () => clearTimeout(timer);
         }
     }, [notification]);
 
+    const toggleBlueprintList = () => {
+        setIsBlueprintListOpen((prev) => !prev);
+    };
+
     return (
-        <div className="contenedir-total">
+        <div className="contenedor-total">
             <Navbar />
             <div className="contenedor bg-gray-100 h-screen p-6">
                 <div className="mt-10 text-center">
@@ -141,7 +210,8 @@ const Blueprints = () => {
 
                 {notification.message && (
                     <div
-                        className={`fixed bottom-5 right-5 bg-${notification.type === 'success' ? 'green' : 'red'}-500 text-white p-4 rounded-lg shadow-lg`}
+                        className={`fixed bottom-5 right-5 p-4 rounded-lg shadow-lg ${notification.type === 'success' ? 'bg-green-500' : 'bg-red-500'
+                            } text-white`}
                     >
                         {notification.message}
                         <button onClick={closeNotification} className="ml-4 underline">
@@ -150,142 +220,172 @@ const Blueprints = () => {
                     </div>
                 )}
 
-                {isModalOpen && (
-                    <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50">
-                        <div className="bg-white p-6 rounded-lg shadow-lg w-1/3">
-                            <h2 className="text-xl font-semibold mb-4">{modalType}</h2>
-                            <form>
-                                {modalType === 'Crear nuevo plano' && (
-                                    <>
-                                        <div className="mb-4">
-                                            <label className="block text-gray-700">ID de la Venta</label>
-                                            <input
-                                                type="text"
-                                                name="sale_id"
-                                                value={formData.sale_id}
-                                                onChange={handleInputChange}
-                                                className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:border-blue-500"
-                                                placeholder="Ingresa el ID de la venta"
-                                            />
-                                        </div>
-                                        <div className="mb-4">
-                                            <label className="block text-gray-700">Código del Plano</label>
-                                            <input
-                                                type="text"
-                                                name="blueprintCode"
-                                                value={formData.blueprintCode}
-                                                onChange={handleInputChange}
-                                                className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:border-blue-500"
-                                                placeholder="Ingresa el código del plano (ej. 3/5)"
-                                            />
-                                        </div>
-                                        <div className="mb-4">
-                                            <label className="block text-gray-700">Descripción</label>
-                                            <textarea
-                                                name="description"
-                                                value={formData.description}
-                                                onChange={handleInputChange}
-                                                className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:border-blue-500"
-                                                placeholder="Ingresa la descripción del plano"
-                                            />
-                                        </div>
-                                        <div className="mb-4">
-                                            <label className="block text-gray-700">Material</label>
-                                            <input
-                                                type="text"
-                                                name="material"
-                                                value={formData.material}
-                                                onChange={handleInputChange}
-                                                className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:border-blue-500"
-                                                placeholder="Ingresa el material del plano"
-                                            />
-                                        </div>
-                                        <div className="mb-4">
-                                            <label className="block text-gray-700">Color</label>
-                                            <input
-                                                type="text"
-                                                name="colour"
-                                                value={formData.colour}
-                                                onChange={handleInputChange}
-                                                className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:border-blue-500"
-                                                placeholder="Ingresa el color del plano"
-                                            />
-                                        </div>
-                                    </>
-                                )}
+                <button
+                    onClick={toggleBlueprintList}
+                    className="bg-gray-500 text-white py-2 px-4 rounded-lg hover:bg-gray-600 transition duration-300 mt-8"
+                >
+                    {isBlueprintListOpen ? 'Ocultar lista de Planos' : 'Mostrar lista de Planos'}
+                </button>
 
-                                {modalType === 'Cargar foto' && (
-                                    <>
-                                        <div className="mb-4">
-                                            <label className="block text-gray-700">ID del Plano</label>
-                                            <input
-                                                type="text"
-                                                name="blueprint_id"
-                                                value={formData.blueprint_id}
-                                                onChange={handleInputChange}
-                                                className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:border-blue-500"
-                                                placeholder="Ingresa el ID del plano"
-                                            />
-                                        </div>
-                                        <div className="mb-4">
-                                            <label className="block text-gray-700">URL de la Foto</label>
-                                            <input
-                                                type="text"
-                                                name="photo_url"
-                                                value={formData.photo_url}
-                                                onChange={handleInputChange}
-                                                className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:border-blue-500"
-                                                placeholder="Ingresa la URL de la foto"
-                                            />
-                                        </div>
-                                    </>
-                                )}
-
-                                {modalType === 'Modificar datos de un plano' && (
-                                    <>
-                                        <div className="mb-4">
-                                            <label className="block text-gray-700">Nuevo Código del Plano</label>
-                                            <input
-                                                type="text"
-                                                className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:border-yellow-500"
-                                                placeholder="Ingresa el nuevo código del plano"
-                                            />
-                                        </div>
-                                        <div className="mb-4">
-                                            <label className="block text-gray-700">Descripción</label>
-                                            <textarea
-                                                className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:border-yellow-500"
-                                                placeholder="Ingresa la descripción"
-                                            />
-                                        </div>
-                                    </>
-                                )}
-
-                                {modalType === 'Eliminar un plano' && (
-                                    <p className="text-red-500">¿Estás seguro que deseas eliminar este plano? Esta acción no se puede deshacer.</p>
-                                )}
-
-                                <div className="flex justify-end space-x-4 mt-4">
-                                    <button
-                                        type="button"
-                                        className="bg-gray-500 text-white py-2 px-4 rounded-lg hover:bg-gray-600 transition duration-300"
-                                        onClick={closeModal}
-                                    >
-                                        Cancelar
-                                    </button>
-                                    <button
-                                        type="button"
-                                        className={`py-2 px-4 rounded-lg ${modalType === 'Eliminar un plano' ? 'bg-red-500 hover:bg-red-600' : 'bg-blue-500 hover:bg-blue-600'} text-white transition duration-300`}
-                                        onClick={handleAction}
-                                    >
-                                        {modalType === 'Eliminar un plano' ? 'Eliminar' : 'Confirmar'}
-                                    </button>
-                                </div>
-                            </form>
-                        </div>
+                {isBlueprintListOpen && (
+                    <div className="mt-4 bg-white p-4 rounded-lg shadow-md">
+                        <h2 className="text-xl font-semibold mb-4">Lista de Planos</h2>
+                        <table className="w-full">
+                            <thead>
+                                <tr className="bg-gray-200">
+                                    <th className="p-2">ID</th>
+                                    <th className="p-2">Venta ID</th>
+                                    <th className="p-2">Código</th>
+                                    <th className="p-2">Descripción</th>
+                                    <th className="p-2">Material</th>
+                                    <th className="p-2">Color</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {blueprints.map((blueprint) => (
+                                    <tr key={blueprint.blueprint_id}>
+                                        <td className="border p-2">{blueprint.blueprint_id}</td>
+                                        <td className="border p-2">{blueprint.sale_id}</td>
+                                        <td className="border p-2">{blueprint.blueprintCode}</td>
+                                        <td className="border p-2">{blueprint.description}</td>
+                                        <td className="border p-2">{blueprint.material}</td>
+                                        <td className="border p-2">{blueprint.colour}</td>
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </table>
                     </div>
                 )}
             </div>
+
+            {isModalOpen && (
+                <div className="fixed inset-0 flex items-center justify-center z-50 bg-black bg-opacity-50">
+                    <div className="bg-white p-6 rounded-lg shadow-lg">
+                        <h2 className="text-xl font-bold mb-4">{modalType}</h2>
+                        <form>
+                            {modalType === 'Modificar datos de un plano' || modalType === 'Eliminar un plano' ? (
+                                <div>
+                                    <label className="block mb-2">
+                                        ID del plano:
+                                        <input
+                                            type="text"
+                                            name="blueprint_id"
+                                            value={formData.blueprint_id}
+                                            onChange={handleInputChange}
+                                            className="border p-2 w-full mb-4"
+                                            required
+                                        />
+                                    </label>
+                                </div>
+                            ) : null}
+
+                            {modalType === 'Crear nuevo plano' || modalType === 'Modificar datos de un plano' ? (
+                                <>
+                                    <label className="block mb-2">
+                                        ID de venta:
+                                        <input
+                                            type="text"
+                                            name="sale_id"
+                                            value={formData.sale_id}
+                                            onChange={handleInputChange}
+                                            className="border p-2 w-full mb-4"
+                                            required
+                                        />
+                                    </label>
+                                    <label className="block mb-2">
+                                        Código del plano:
+                                        <input
+                                            type="text"
+                                            name="blueprintCode"
+                                            value={formData.blueprintCode}
+                                            onChange={handleInputChange}
+                                            className="border p-2 w-full mb-4"
+                                            required
+                                        />
+                                    </label>
+                                    <label className="block mb-2">
+                                        Descripción:
+                                        <input
+                                            type="text"
+                                            name="description"
+                                            value={formData.description}
+                                            onChange={handleInputChange}
+                                            className="border p-2 w-full mb-4"
+                                            required
+                                        />
+                                    </label>
+                                    <label className="block mb-2">
+                                        Material:
+                                        <input
+                                            type="text"
+                                            name="material"
+                                            value={formData.material}
+                                            onChange={handleInputChange}
+                                            className="border p-2 w-full mb-4"
+                                            required
+                                        />
+                                    </label>
+                                    <label className="block mb-2">
+                                        Color:
+                                        <input
+                                            type="text"
+                                            name="colour"
+                                            value={formData.colour}
+                                            onChange={handleInputChange}
+                                            className="border p-2 w-full mb-4"
+                                            required
+                                        />
+                                    </label>
+                                </>
+                            ) : null}
+
+                            {modalType === 'Cargar foto' ? (
+                                <>
+                                    <label className="block mb-2">
+                                        ID del plano:
+                                        <input
+                                            type="text"
+                                            name="blueprint_id"
+                                            value={formData.blueprint_id}
+                                            onChange={handleInputChange}
+                                            className="border p-2 w-full mb-4"
+                                            required
+                                        />
+                                    </label>
+                                    <label className="block mb-2">
+                                        URL de la foto:
+                                        <input
+                                            type="text"
+                                            name="photo_url"
+                                            value={formData.photo_url}
+                                            onChange={handleInputChange}
+                                            className="border p-2 w-full mb-4"
+                                            required
+                                        />
+                                    </label>
+                                </>
+                            ) : null}
+
+                            <div className="flex justify-end">
+                                <button
+                                    type="button"
+                                    onClick={handleAction}
+                                    className="bg-blue-500 text-white py-2 px-4 rounded-lg hover:bg-blue-600 transition duration-300"
+                                >
+                                    {modalType}
+                                </button>
+                                <button
+                                    type="button"
+                                    onClick={closeModal}
+                                    className="bg-gray-300 text-black py-2 px-4 rounded-lg hover:bg-gray-400 transition duration-300 ml-2"
+                                >
+                                    Cancelar
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            )}
         </div>
     );
 };
