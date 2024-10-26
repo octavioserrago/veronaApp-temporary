@@ -4,8 +4,13 @@ import axios from 'axios';
 import Logo from '../assets/verona-escrito.png';
 import { useAuth } from '../context/AuthContext';
 import Navbar from '../components/Navbar';
+import jsPDF from 'jspdf';
 import { CiFilter } from 'react-icons/ci';
-import { IoRefreshCircleOutline } from 'react-icons/io5';
+import { IoRefreshCircleOutline, IoReceiptOutline } from 'react-icons/io5';
+import mail from "../assets/correo-electronico.png";
+import ubicacion from "../assets/ubicacion.png"
+import sitioWeb from "../assets/sitio-web.png"
+import phone from "../assets/ring-phone.png"
 
 const Sales = () => {
     const { branchId, logueado } = useAuth();
@@ -236,6 +241,180 @@ const Sales = () => {
     const paymentMethods = ['Efectivo', 'Tarjeta de Crédito', 'Transferencia Bancaria'];
     const statuses = ['En suspenso', 'En produccion', 'Terminado sin entregar', 'Entregado'];
 
+    const loadImage = (imgSrc) => {
+        return new Promise((resolve, reject) => {
+            const img = new Image();
+            img.src = imgSrc;
+            img.onload = () => resolve(img);
+            img.onerror = () => reject(new Error(`Failed to load image: ${imgSrc}`));
+        });
+    };
+
+    const handleDescargarComprobante = async (saleId) => {
+        try {
+            const response = await fetch(`http://localhost:3333/sales/${saleId}`);
+
+            if (!response.ok) {
+                throw new Error('Error al obtener los datos de la venta');
+            }
+
+            const saleData = await response.json();
+            console.log('Datos de la venta:', saleData); // Debug: mostrar datos
+
+            if (!saleData || !saleData.success || !saleData.result) {
+                throw new Error('No se encontraron datos para la venta solicitada');
+            }
+
+            // Crear una nueva instancia de jsPDF
+            const doc = new jsPDF();
+
+            // Datos de la empresa según branchId
+            const branchInfo = {
+                1: {
+                    address: "Juan Bautista Alberdi 3333",
+                    phone: "11 5990-6984",
+                    email: "marmoleriaverona@gmail.com"
+                },
+                2: {
+                    address: "Juan Bautista Alberdi 3778",
+                    phone: "11 6292-2173",
+                    email: "localverona@hotmail.com"
+                }
+            };
+
+            const currentBranch = branchInfo[branchId];
+
+            // Cargar las imágenes de forma asincrónica
+            const imgPromises = [
+                loadImage(Logo),  // Logo en la parte superior
+                loadImage(mail),
+                loadImage(ubicacion),
+                loadImage(sitioWeb),
+                loadImage(phone)
+            ];
+
+            const [logoImage, mailImage, pinImage, sitioImage, phoneImage] = await Promise.all(imgPromises);
+
+            // Añadir el logo en la parte superior
+            const logoWidth = 80; // Ajusta el tamaño del logo según sea necesario
+            const logoHeight = 20; // Ajusta el tamaño del logo según sea necesario
+            doc.addImage(logoImage.src, 'PNG', 1, 10, logoWidth, logoHeight); // Logo en la parte superior
+            let yOffset = 35; // Ajustar el Y después del logo
+
+            // Otras secciones antes de la información de la empresa
+            // Fecha actual
+            const today = new Date();
+            const formattedDate = today.toLocaleDateString('es-ES', {
+                year: 'numeric',
+                month: 'long',
+                day: 'numeric'
+            });
+
+            doc.setFontSize(12);
+            doc.text(`Fecha: ${formattedDate}`, 10, yOffset);
+            yOffset += 10; // Espacio después de la fecha
+
+            // Título
+            doc.setFontSize(18);
+            doc.text("Comprobante de Venta", 10, yOffset);
+            doc.setLineWidth(0.5);
+            yOffset += 10; // Incrementar el desplazamiento vertical para el título
+            doc.line(10, yOffset, 200, yOffset); // Línea horizontal
+            yOffset += 5; // Espaciado después de la línea
+
+            // Detalles de la venta
+            doc.setFontSize(12);
+            const maxWidth = 190; // Ancho máximo en mm
+
+            // Usar splitTextToSize para cada detalle
+            const details = [
+                `ID de Venta: ${saleData.result.sale_id}`,
+                `Cliente: ${saleData.result.customer_name}`,
+                `Detalle: ${saleData.result.details}`,
+                `Método de Pago: ${saleData.result.payment_method}`,
+                `Dinero del Cliente: $${saleData.result.total_money_entries}`,
+                `Importe Total de la Compra: $${saleData.result.total_amount}`
+            ];
+
+            details.forEach((detail) => {
+                const lines = doc.splitTextToSize(detail, maxWidth);
+                doc.text(lines, 10, yOffset);
+                yOffset += (lines.length * 10); // Ajusta el espaciado según sea necesario
+            });
+
+            // Agregar una línea de separación
+            doc.setLineWidth(0.5);
+            doc.line(10, yOffset, 200, yOffset); // Línea horizontal
+            yOffset += 5; // Espaciado después de la línea
+
+            // Agregar nuevos textos con saltos de línea
+            const mensajesAdicionales = [
+                "El horario de retiro es de lunes a viernes de 9:00 a 12:00 y de 13:30 a 16:30, sábados de 9:00 a 11:30.",
+                "Flete y colocación (en caso de ser solicitado) corren por cuenta del cliente.",
+                "Tratándose de un producto natural, deberán admitirse pequeñas variaciones en la tonalidad y el vetado de las mercaderías entregadas con respecto a las muestras exhibidas.",
+                "La fecha estimada de terminación no es completamente precisa; para retirar, debe esperar a ser contactado/a por nosotros.",
+                "Este documento no es válido como factura."
+            ];
+
+            // Espacio entre textos
+            mensajesAdicionales.forEach((mensaje) => {
+                const lines = doc.splitTextToSize(mensaje, maxWidth);
+                doc.text(lines, 10, yOffset);
+                yOffset += (lines.length * 10); // Ajusta el espaciado según sea necesario
+            });
+
+            // Mensaje de agradecimiento
+            doc.setFontSize(12);
+            const mensajeAgradecimiento = "¡Gracias por elegirnos! Valoramos tu preferencia y estamos comprometidos a ofrecerte el mejor servicio posible.";
+            const linesAgradecimiento = doc.splitTextToSize(mensajeAgradecimiento, maxWidth);
+            doc.text(linesAgradecimiento, 10, yOffset);
+
+            // Ahora, establecemos un nuevo yOffset para la información de la empresa
+            yOffset += 20; // Aumentar el espacio antes de la información de la empresa
+
+            // Línea de separación
+            doc.setLineWidth(0.5);
+            doc.line(10, yOffset, 200, yOffset); // Línea horizontal
+            yOffset += 5; // Espaciado después de la línea
+
+
+            // Información de la empresa (izquierda)
+            const xOffsetLeft = 10;  // Posición X para el lado izquierdo
+            const xOffsetRight = 130; // Posición X para el lado derecho
+            const imgWidth = 8; // Ancho de las imágenes
+            const imgHeight = 8; // Alto de las imágenes
+
+            // Información de la empresa (izquierda)
+            doc.addImage(mailImage.src, 'PNG', xOffsetLeft, yOffset, imgWidth, imgHeight);
+            doc.text(currentBranch.email, xOffsetLeft + imgWidth + 5, yOffset + 7);
+
+            yOffset += 15; // Incrementar el desplazamiento vertical para la siguiente imagen
+            doc.addImage(phoneImage.src, 'PNG', xOffsetLeft, yOffset, imgWidth, imgHeight);
+            doc.text(currentBranch.phone, xOffsetLeft + imgWidth + 5, yOffset + 7);
+
+            // Ahora continuamos con la información de la empresa (derecha)
+            yOffset = yOffset - 15; // Ajustar el yOffset para la ubicación y web
+            doc.addImage(pinImage.src, 'PNG', xOffsetRight, yOffset, imgWidth, imgHeight);
+            doc.text(currentBranch.address, xOffsetRight + imgWidth + 5, yOffset + 7);
+
+            yOffset += 15; // Incrementar el desplazamiento vertical para la siguiente imagen
+            doc.addImage(sitioImage.src, 'PNG', xOffsetRight, yOffset, imgWidth, imgHeight);
+            doc.text("marmoleriaverona.com.ar", xOffsetRight + imgWidth + 5, yOffset + 7);
+
+            yOffset += 10; // Espacio adicional antes de la línea de separación
+
+            // Guardar el PDF
+            doc.save(`comprobante_venta_${saleId}.pdf`);
+            setNotification({ message: 'Comprobante descargado exitosamente!', type: 'success' });
+
+        } catch (error) {
+            console.error('Error al descargar comprobante:', error);
+            setNotification({ message: 'Ocurrió un error al descargar el comprobante.', type: 'error' });
+        }
+    };
+
+
+
     return (
         <div className="flex flex-col min-h-screen">
             <Navbar />
@@ -403,6 +582,13 @@ const Sales = () => {
                                                 >
                                                     Editar
                                                 </button>
+                                                <button
+                                                    onClick={() => handleDescargarComprobante(sale.sale_id)}
+                                                    className="text-blue-500 hover:text-blue-700 mr-2"
+                                                >
+                                                    <IoReceiptOutline />
+                                                </button>
+
                                                 <button
                                                     onClick={() => handleDelete(sale.sale_id)}
                                                     className="text-red-500 hover:text-red-700"
