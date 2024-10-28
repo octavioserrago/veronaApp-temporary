@@ -310,79 +310,110 @@ const Sales = () => {
                 day: 'numeric'
             });
 
-            doc.setFontSize(12);
-            doc.text(`Fecha: ${formattedDate}`, 10, yOffset);
-            yOffset += 10; // Espacio después de la fecha
-
-            // Título
             doc.setFontSize(18);
             doc.text("Comprobante de Venta", 10, yOffset);
+            yOffset += 10;
+
+
+            doc.setFontSize(12);
+            doc.text(`${formattedDate}`, 10, yOffset);
             doc.setLineWidth(0.5);
-            yOffset += 10; // Incrementar el desplazamiento vertical para el título
-            doc.line(10, yOffset, 200, yOffset); // Línea horizontal
-            yOffset += 5; // Espaciado después de la línea
+            yOffset += 10;
+            doc.line(10, yOffset, 200, yOffset);
+            yOffset += 5;
 
             // Detalles de la venta
             doc.setFontSize(12);
             const maxWidth = 190; // Ancho máximo en mm
 
-            // Usar splitTextToSize para cada detalle
             const details = [
-                `ID de Venta: ${saleData.result.sale_id}`,
-                `Cliente: ${saleData.result.customer_name}`,
-                `Detalle: ${saleData.result.details}`,
-                `Método de Pago: ${saleData.result.payment_method}`,
-                `Dinero del Cliente: $${saleData.result.total_money_entries}`,
-                `Importe Total de la Compra: $${saleData.result.total_amount}`
+                { title: "ID de Venta", value: saleData.result.sale_id },
+                { title: "Cliente", value: saleData.result.customer_name },
+                { title: "Detalle", value: saleData.result.details },
+                { title: "Método de Pago", value: saleData.result.payment_method },
+                { title: "Dinero del Cliente", value: ` $${saleData.result.total_money_entries}` },
+                { title: "Importe Total de la Compra", value: ` $${saleData.result.total_amount}` }
             ];
 
             details.forEach((detail) => {
-                const lines = doc.splitTextToSize(detail, maxWidth);
-                doc.text(lines, 10, yOffset);
-                yOffset += (lines.length * 10); // Ajusta el espaciado según sea necesario
+                if (detail.title === "Detalle") {
+                    // Si es "Detalle", muestra el título en negrita en una línea aparte
+                    doc.setFont("helvetica", "bold");
+                    const titleLine = `${detail.title}:`;
+                    const titleLines = doc.splitTextToSize(titleLine, maxWidth);
+                    doc.text(titleLines, 10, yOffset);
+                    yOffset += titleLines.length * 10;
+
+                    // Mostrar el valor del detalle debajo del título
+                    doc.setFont("helvetica", "normal");
+                    const detailLines = doc.splitTextToSize(detail.value, maxWidth);
+                    doc.text(detailLines, 10, yOffset);
+                    yOffset += detailLines.length * 10;
+                } else {
+                    // Para otros elementos, mostrar título en negrita y valor en la misma línea
+                    doc.setFont("helvetica", "bold");
+                    const title = `${detail.title}: `;
+                    doc.text(title, 10, yOffset);
+
+                    // Obtener el ancho del título en negrita para alinear el valor al lado
+                    const titleWidth = doc.getTextWidth(title);
+
+                    // Cambiar a fuente normal para el valor y mostrarlo en la misma línea
+                    doc.setFont("helvetica", "normal");
+                    const valueLines = doc.splitTextToSize(detail.value, maxWidth - titleWidth);
+                    doc.text(valueLines, 10 + titleWidth, yOffset);
+
+                    // Incrementar `yOffset` después de cada par título-valor
+                    yOffset += 10; // Ajusta según sea necesario para el espaciado
+                }
             });
+
 
             // Agregar una línea de separación
             doc.setLineWidth(0.5);
             doc.line(10, yOffset, 200, yOffset); // Línea horizontal
             yOffset += 5; // Espaciado después de la línea
 
-            // Agregar nuevos textos con saltos de línea
+            // Configuración de mensajes adicionales
             const mensajesAdicionales = [
-                "El horario de retiro es de lunes a viernes de 9:00 a 12:00 y de 13:30 a 16:30, sábados de 9:00 a 11:30.",
-                "Flete y colocación (en caso de ser solicitado) corren por cuenta del cliente.",
+                "La mercadería se retira por fábrica (Juan Bautista Alberdi 3333). El horario de retiro es de lunes a viernes de 9:00 a 12:00 y de 13:30 a 16:30, y sábados de 9:00 a 11:30.",
+                "Flete y colocación (en caso de ser solicitados) corren por cuenta del cliente.",
                 "Tratándose de un producto natural, deberán admitirse pequeñas variaciones en la tonalidad y el vetado de las mercaderías entregadas con respecto a las muestras exhibidas.",
                 "La fecha estimada de terminación no es completamente precisa; para retirar, debe esperar a ser contactado/a por nosotros.",
                 "Este documento no es válido como factura."
             ];
 
-            // Espacio entre textos
+
+            // Aplicar fuente elegante y más pequeña
+            doc.setFont("helvetica", "italic");
+            doc.setFontSize(10);
+
+
             mensajesAdicionales.forEach((mensaje) => {
                 const lines = doc.splitTextToSize(mensaje, maxWidth);
                 doc.text(lines, 10, yOffset);
-                yOffset += (lines.length * 10); // Ajusta el espaciado según sea necesario
+                yOffset += lines.length * 10;
             });
 
-            // Mensaje de agradecimiento
+
             doc.setFontSize(12);
             const mensajeAgradecimiento = "¡Gracias por elegirnos! Valoramos tu preferencia y estamos comprometidos a ofrecerte el mejor servicio posible.";
             const linesAgradecimiento = doc.splitTextToSize(mensajeAgradecimiento, maxWidth);
             doc.text(linesAgradecimiento, 10, yOffset);
 
-            // Ahora, establecemos un nuevo yOffset para la información de la empresa
-            yOffset += 20; // Aumentar el espacio antes de la información de la empresa
 
-            // Línea de separación
+            yOffset += 20;
+
+
             doc.setLineWidth(0.5);
-            doc.line(10, yOffset, 200, yOffset); // Línea horizontal
-            yOffset += 5; // Espaciado después de la línea
+            doc.line(10, yOffset, 200, yOffset);
+            yOffset += 5;
 
 
-            // Información de la empresa (izquierda)
-            const xOffsetLeft = 10;  // Posición X para el lado izquierdo
-            const xOffsetRight = 130; // Posición X para el lado derecho
-            const imgWidth = 8; // Ancho de las imágenes
-            const imgHeight = 8; // Alto de las imágenes
+            const xOffsetLeft = 10;
+            const xOffsetRight = 130;
+            const imgWidth = 8;
+            const imgHeight = 8;
 
             // Información de la empresa (izquierda)
             doc.addImage(mailImage.src, 'PNG', xOffsetLeft, yOffset, imgWidth, imgHeight);
