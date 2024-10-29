@@ -20,12 +20,14 @@ const Login = () => {
                 password
             });
 
+            console.log("Respuesta del backend:", response.data); // Agregar esto
+
             const { success, message, user } = response.data;
 
             if (success) {
                 console.log(message);
                 console.log(user);
-                login(user);
+                login(user, response.data.token); // Cambia aquí
                 navigate('/dashboard');
             } else {
                 setError(message);
@@ -35,6 +37,7 @@ const Login = () => {
             setError('Error interno del servidor');
         }
     };
+
 
     return (
         <div className="flex justify-center items-center min-h-screen bg-gray-100">

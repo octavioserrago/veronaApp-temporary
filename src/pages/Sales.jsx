@@ -8,12 +8,15 @@ import jsPDF from 'jspdf';
 import { CiFilter } from 'react-icons/ci';
 import { IoRefreshCircleOutline, IoReceiptOutline } from 'react-icons/io5';
 import mail from "../assets/correo-electronico.png";
-import ubicacion from "../assets/ubicacion.png"
-import sitioWeb from "../assets/sitio-web.png"
-import phone from "../assets/ring-phone.png"
+import ubicacion from "../assets/ubicacion.png";
+import sitioWeb from "../assets/sitio-web.png";
+import phone from "../assets/ring-phone.png";
+
+const API_URL = 'http://localhost:3333/sales';
 
 const Sales = () => {
-    const { branchId, logueado } = useAuth();
+    const { branchId, logueado, token } = useAuth();
+    console.log(token)
     const [sales, setSales] = useState([]);
     const [searchTerm, setSearchTerm] = useState('');
     const [loading, setLoading] = useState(true);
@@ -24,6 +27,7 @@ const Sales = () => {
         payment_method: '',
         total_money_entries: '',
         total_amount: '',
+        phoneNumber: '',
         status: '',
     });
     const [showForm, setShowForm] = useState(false);
@@ -42,7 +46,6 @@ const Sales = () => {
     const [blueprintPhotos, setBlueprintPhotos] = useState([]);
     const [showBlueprintModal, setShowBlueprintModal] = useState(false);
 
-
     useEffect(() => {
         if (!logueado) {
             navigate('/');
@@ -59,7 +62,13 @@ const Sales = () => {
         setErrorMessage('');
 
         try {
-            const response = await axios.get('http://localhost:3333/sales');
+            console.log("Token enviado:", token); // Verifica si el token se asigna correctamente
+            const response = await axios.get(API_URL, {
+                headers: {
+                    Authorization: `Bearer ${token}`,
+                },
+            });
+
             if (response.data.success && Array.isArray(response.data.results)) {
                 if (response.data.results.length === 0) {
                     setErrorMessage('No hubo ventas para mostrar.');
@@ -70,17 +79,27 @@ const Sales = () => {
                 setSales([]);
             }
         } catch (error) {
-            setErrorMessage('Error al obtener las ventas. Por favor, intenta de nuevo más tarde.');
-            console.error('Error fetching sales:', error);
+            if (error.response) {
+                console.error('Error en la respuesta:', error.response.data);
+                setErrorMessage(error.response.data.message || 'Error en la solicitud. Intenta de nuevo.');
+            } else {
+                console.error('Error al obtener las ventas:', error.message);
+                setErrorMessage('Error de red o de servidor. Por favor, intenta de nuevo más tarde.');
+            }
             setSales([]);
         } finally {
             setLoading(false);
         }
     };
 
+
     const fetchBranches = async () => {
         try {
-            const response = await axios.get('http://localhost:3333/branches');
+            const response = await axios.get('http://localhost:3333/branches', {
+                headers: {
+                    Authorization: `Bearer ${token}`,
+                },
+            });
             if (response.data.success && Array.isArray(response.data.results)) {
                 setBranches(response.data.results.map(branch => branch.branch_id));
             } else {
@@ -98,11 +117,15 @@ const Sales = () => {
         setErrorMessage('');
         const isNumber = !isNaN(searchTerm);
         const route = isNumber
-            ? `http://localhost:3333/sales/${searchTerm}`
-            : `http://localhost:3333/sales/search/${searchTerm}`;
+            ? `${API_URL}/${searchTerm}`
+            : `${API_URL}/search/${searchTerm}`;
 
         try {
-            const response = await axios.get(route);
+            const response = await axios.get(route, {
+                headers: {
+                    Authorization: `Bearer ${token}`, // Agrega el token en el encabezado
+                },
+            });
             if (response.data.success) {
                 if (response.data.results && response.data.results.length === 0) {
                     setErrorMessage('No hubo coincidencias en las ventas con esa búsqueda.');
@@ -130,9 +153,17 @@ const Sales = () => {
         e.preventDefault();
         try {
             if (editingSale) {
-                await axios.put(`http://localhost:3333/sales/${editingSale}`, form);
+                await axios.put(`${API_URL}/${editingSale}`, form, {
+                    headers: {
+                        Authorization: `Bearer ${token}`, // Agrega el token en el encabezado
+                    },
+                });
             } else {
-                await axios.post('http://localhost:3333/sales', form);
+                await axios.post(API_URL, form, {
+                    headers: {
+                        Authorization: `Bearer ${token}`, // Agrega el token en el encabezado
+                    },
+                });
             }
             setShowForm(false);
             setEditingSale(null);
@@ -146,7 +177,11 @@ const Sales = () => {
         const userConfirmation = window.prompt('Escribe "Borrar" para confirmar la eliminación:');
         if (userConfirmation === 'Borrar') {
             try {
-                await axios.delete(`http://localhost:3333/sales/${sale_id}`);
+                await axios.delete(`${API_URL}/${sale_id}`, {
+                    headers: {
+                        Authorization: `Bearer ${token}`,
+                    },
+                });
                 fetchSales();
             } catch (error) {
                 console.error('Error deleting sale:', error);
@@ -164,6 +199,7 @@ const Sales = () => {
             payment_method: sale.payment_method,
             total_money_entries: sale.total_money_entries,
             total_amount: sale.total_amount,
+            phoneNumber: sale.phoneNumber,
             status: sale.status,
         });
         setEditingSale(sale.sale_id);
@@ -172,8 +208,16 @@ const Sales = () => {
 
     const handleVerPlanos = async (saleId) => {
         try {
-            const detailsResponse = await axios.get(`http://localhost:3333/blueprints/sales/${saleId}`);
-            const photosResponse = await axios.get(`http://localhost:3333/blueprints/sales/photos/${saleId}`);
+            const detailsResponse = await axios.get(`http://localhost:3333/blueprints/sales/${saleId}`, {
+                headers: {
+                    Authorization: `Bearer ${token}`,
+                },
+            });
+            const photosResponse = await axios.get(`http://localhost:3333/blueprints/sales/photos/${saleId}`, {
+                headers: {
+                    Authorization: `Bearer ${token}`,
+                },
+            });
 
             if (detailsResponse.data.success && photosResponse.data.success) {
                 setBlueprintDetails(detailsResponse.data.results);
@@ -189,13 +233,11 @@ const Sales = () => {
         }
     };
 
-
     const handleCloseModal = () => {
         setShowBlueprintModal(false);
         setBlueprintDetails([]);
         setBlueprintPhotos([]);
     };
-
 
     const handleFilterChange = (e) => {
         const { name, value } = e.target;
@@ -219,7 +261,11 @@ const Sales = () => {
         console.log('Final URL:', url);
 
         try {
-            const response = await axios.get(url);
+            const response = await axios.get(url, {
+                headers: {
+                    Authorization: `Bearer ${token}`,
+                },
+            });
             if (response.data.success) {
                 setSales(response.data.results);
             } else {
@@ -237,7 +283,6 @@ const Sales = () => {
         setShowFilterModal(false);
     };
 
-
     const paymentMethods = ['Efectivo', 'Tarjeta de Crédito', 'Transferencia Bancaria'];
     const statuses = ['En suspenso', 'En produccion', 'Terminado sin entregar', 'Entregado'];
 
@@ -248,15 +293,22 @@ const Sales = () => {
             img.onload = () => resolve(img);
             img.onerror = () => reject(new Error(`Failed to load image: ${imgSrc}`));
         });
-    };
+    }
 
     const handleDescargarComprobante = async (saleId) => {
         try {
-            const response = await fetch(`http://localhost:3333/sales/${saleId}`);
+            const response = await fetch(`http://localhost:3333/sales/${saleId}`, {
+                method: 'GET',
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json'
+                }
+            });
 
             if (!response.ok) {
                 throw new Error('Error al obtener los datos de la venta');
             }
+
 
             const saleData = await response.json();
             console.log('Datos de la venta:', saleData); // Debug: mostrar datos
@@ -545,6 +597,16 @@ const Sales = () => {
                                     className="p-2 border border-gray-300 rounded-md w-full"
                                     required
                                 />
+
+                                <input
+                                    type="text"
+                                    name="phoneNumber"
+                                    value={form.phoneNumber}
+                                    onChange={handleInputChange}
+                                    placeholder="Numero de telefono"
+                                    className="p-2 border border-gray-300 rounded-md w-full"
+                                    required
+                                />
                                 <select
                                     name="status"
                                     value={form.status}
@@ -585,6 +647,7 @@ const Sales = () => {
                                     <th className="px-6 py-3 text-xs font-medium text-gray-500 uppercase text-left">Cliente</th>
                                     <th className="px-6 py-3 text-xs font-medium text-gray-500 uppercase text-left">Dinero del Cliente Cobrado</th>
                                     <th className="px-6 py-3 text-xs font-medium text-gray-500 uppercase text-left">Monto Total</th>
+                                    <th className="px-6 py-3 text-xs font-medium text-gray-500 uppercase text-left">Telefono</th>
                                     <th className="px-6 py-3 text-xs font-medium text-gray-500 uppercase text-left">Estado</th>
                                     <th className="px-6 py-3 text-xs font-medium text-gray-500 uppercase text-left">Acciones</th>
                                 </tr>
@@ -605,6 +668,7 @@ const Sales = () => {
                                             <td className="px-6 py-4 whitespace-nowrap">{sale.customer_name}</td>
                                             <td className="px-6 py-4 whitespace-nowrap">${sale.total_money_entries}</td>
                                             <td className="px-6 py-4 whitespace-nowrap">${sale.total_amount}</td>
+                                            <td className="px-6 py-4 whitespace-nowrap">{sale.phoneNumber}</td>
                                             <td className="px-6 py-4 whitespace-nowrap">{sale.status}</td>
                                             <td className="px-6 py-4 whitespace-nowrap">
                                                 <button
@@ -646,49 +710,60 @@ const Sales = () => {
             {/* Modal para mostrar los planos */}
             {showBlueprintModal && (
                 <div className="fixed inset-0 flex items-center justify-center z-50 bg-black bg-opacity-50">
-                    <div className="bg-white p-6 rounded-lg shadow-lg">
+                    <div className="bg-white p-6 rounded-lg shadow-lg overflow-y-auto max-h-screen w-full max-w-4xl">
                         <h2 className="text-lg font-medium mb-4">Detalles de Planos</h2>
 
-                        {/* Sección de detalles */}
-                        <div className="mb-4">
-                            <h3 className="font-medium">Detalles:</h3>
-                            <ul>
-                                {blueprintDetails.map(detail => (
-                                    <React.Fragment key={detail.id}>
-                                        <li>{detail.description}</li>
-                                    </React.Fragment>
-                                ))}
-                            </ul>
-                        </div>
-
-                        {/* Sección de planos */}
-                        {blueprintPhotos.length > 0 ? (
-                            <div className="mb-4">
-                                <h3 className="font-medium">Planos:</h3>
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
-                                    {blueprintPhotos.map((photo, index) => (
+                        {/* Sección de detalles y enlace al plano */}
+                        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+                            {blueprintDetails.map((detail, index) => (
+                                <div key={detail.id} className="p-4 border border-gray-300 rounded-lg shadow-sm">
+                                    {/* Código de plano como enlace */}
+                                    {blueprintPhotos[index]?.photo_url && (
                                         <a
-                                            key={index} // Usa index si no tienes un id único para cada elemento
-                                            href={photo.photo_url} // Aquí usamos photo.photo_url
+                                            href={blueprintPhotos[index].photo_url}
                                             target="_blank"
                                             rel="noopener noreferrer"
-                                            className="text-blue-500 hover:underline"
+                                            className="text-blue-500 hover:underline font-semibold"
                                         >
-                                            {blueprintDetails[index]?.blueprintCode || `Plano ${index + 1}`} {/* Código del plano o texto por defecto */}
+                                            {detail.blueprintCode || `Plano ${index + 1}`}
                                         </a>
-                                    ))}
-                                </div>
-                            </div>
-                        ) : (
-                            <div className="mb-4">
-                                <p className="text-red-500">No hay planos linkeados.</p>
-                            </div>
-                        )}
+                                    )}
 
-                        <button onClick={handleCloseModal} className="mt-4 py-2 px-4 bg-blue-500 text-white rounded-md hover:bg-blue-600">Cerrar</button>
+                                    {/* Detalles del plano */}
+                                    <div className="mt-2">
+                                        <p className="font-semibold text-blue-700">Descripción:</p>
+                                        <p className="ml-2 text-gray-700">{detail.description}</p>
+                                    </div>
+
+                                    <div className="flex mt-2">
+                                        <span className="font-semibold text-blue-700">Material:</span>
+                                        <p className="ml-2 text-gray-700">{detail.material}</p>
+                                    </div>
+
+                                    <div className="flex mt-2">
+                                        <span className="font-semibold text-blue-700">Color:</span>
+                                        <p className="ml-2 text-gray-700">{detail.colour}</p>
+                                    </div>
+
+                                    <div className="flex mt-2">
+                                        <span className="font-semibold text-blue-700">Estado:</span>
+                                        <p className="ml-2 text-gray-700">{detail.status}</p>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+
+                        <button
+                            onClick={handleCloseModal}
+                            className="mt-6 py-2 px-4 bg-blue-500 text-white rounded-md hover:bg-blue-600"
+                        >
+                            Cerrar
+                        </button>
                     </div>
                 </div>
             )}
+
+
 
             {
                 showFilterModal && (

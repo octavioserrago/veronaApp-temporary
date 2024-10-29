@@ -1,12 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import Navbar from '../components/Navbar';
+import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 
 const API_URL = 'http://localhost:3333/blueprints';
 const PHOTO_URL = 'http://localhost:3333/blueprintPhotos';
 
 const Blueprints = () => {
-    const { branchId } = useAuth();
+    const { branchId, logueado, token } = useAuth();
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [modalType, setModalType] = useState('');
     const [formData, setFormData] = useState({
@@ -22,6 +23,13 @@ const Blueprints = () => {
     const [notification, setNotification] = useState({ message: '', type: '' });
     const [blueprints, setBlueprints] = useState([]);
     const [isBlueprintListOpen, setIsBlueprintListOpen] = useState(false);
+    const navigate = useNavigate();
+
+    useEffect(() => {
+        if (!logueado) {
+            navigate('/');
+        }
+    }, [logueado, navigate]);
 
     const openModal = (type, blueprint = {}) => {
         setModalType(type);
@@ -57,7 +65,11 @@ const Blueprints = () => {
 
     const fetchBlueprints = async () => {
         try {
-            const response = await fetch(API_URL);
+            const response = await fetch(API_URL, {
+                headers: {
+                    Authorization: `Bearer ${token}`
+                }
+            });
             const { success, results } = await response.json();
             if (success && Array.isArray(results)) {
                 setBlueprints(results);
@@ -72,7 +84,10 @@ const Blueprints = () => {
     const apiRequest = async (url, method, body) => {
         const response = await fetch(url, {
             method,
-            headers: { 'Content-Type': 'application/json' },
+            headers: {
+                'Content-Type': 'application/json',
+                Authorization: `Bearer ${token}`
+            },
             body: JSON.stringify(body),
         });
         return response.json();
@@ -99,7 +114,12 @@ const Blueprints = () => {
                     break;
 
                 case 'Eliminar un plano':
-                    const deleteResponse = await fetch(`${API_URL}/${blueprint_id}`, { method: 'DELETE' });
+                    const deleteResponse = await fetch(`${API_URL}/${blueprint_id}`, {
+                        method: 'DELETE',
+                        headers: {
+                            Authorization: `Bearer ${token}`
+                        }
+                    });
                     if (deleteResponse.ok) {
                         setNotification({ message: 'Plano eliminado exitosamente!', type: 'success' });
                         await fetchBlueprints();
@@ -142,7 +162,6 @@ const Blueprints = () => {
             return () => clearTimeout(timer);
         }
     }, [notification.message]);
-
     return (
         <div className="contenedor-total">
             <Navbar />

@@ -7,12 +7,14 @@ export const AuthProvider = ({ children }) => {
     const [branchId, setBranchId] = useState(null);
     const [userId, setUserId] = useState(null);
     const [user, setUser] = useState(null);
+    const [token, setToken] = useState(null);
 
-    const login = (user) => {
+    const login = (user, accessToken) => {
         setLogueado(true);
         setBranchId(user.branch_id);
         setUserId(user.user_id);
         setUser(user);
+        setToken(accessToken);
     };
 
     const logout = () => {
@@ -20,10 +22,11 @@ export const AuthProvider = ({ children }) => {
         setBranchId(null);
         setUserId(null);
         setUser(null);
+        setToken(null);
     };
 
     return (
-        <AuthContext.Provider value={{ logueado, branchId, userId, user, login, logout }}>
+        <AuthContext.Provider value={{ logueado, branchId, userId, user, token, login, logout }}>
             {children}
         </AuthContext.Provider>
     );

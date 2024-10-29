@@ -5,9 +5,10 @@ import Navbar from '../components/Navbar';
 import axios from 'axios';
 
 const Profile = () => {
-    const { user, logueado, logout } = useAuth();
+    const { user, logueado, logout, token } = useAuth();
     const navigate = useNavigate();
 
+    const API_BASE_URL = 'http://localhost:3333/users';
 
     const [newUserName, setNewUserName] = useState(user?.user_name || '');
     const [currentPassword, setCurrentPassword] = useState('');
@@ -22,12 +23,19 @@ const Profile = () => {
         }
     }, [logueado, navigate, user]);
 
+    const axiosConfig = {
+        headers: {
+            Authorization: `Bearer ${token}`
+        }
+    };
+
     const handleUpdateUserName = async () => {
         try {
-            const response = await axios.put(`http://localhost:3333/users/${user.user_id}`, {
-                name: newUserName,
-                password: currentPassword
-            });
+            const response = await axios.put(
+                `${API_BASE_URL}/${user.user_id}`,
+                { name: newUserName, password: currentPassword },
+                axiosConfig
+            );
             if (response.data.success) {
                 setSuccessMessage('Nombre de usuario actualizado con éxito.');
             } else {
@@ -38,7 +46,6 @@ const Profile = () => {
         }
     };
 
-
     const handleUpdatePassword = async () => {
         if (newPassword !== confirmPassword) {
             setErrorMessage('Las contraseñas no coinciden.');
@@ -46,10 +53,11 @@ const Profile = () => {
         }
 
         try {
-            const response = await axios.put(`http://localhost:3333/users/${user.user_id}`, {
-                name: user.user_name,
-                password: newPassword
-            });
+            const response = await axios.put(
+                `${API_BASE_URL}/${user.user_id}`,
+                { name: user.user_name, password: newPassword },
+                axiosConfig
+            );
             if (response.data.success) {
                 setSuccessMessage('Contraseña actualizada con éxito.');
             } else {

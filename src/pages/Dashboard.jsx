@@ -5,10 +5,11 @@ import Logo from '../assets/verona-escrito.png';
 import Navbar from '../components/Navbar';
 
 const Dashboard = () => {
-    const { logueado, user, logout } = useAuth();
+    const { logueado, user, token, logout } = useAuth();
     const navigate = useNavigate();
     const [dolarOficial, setDolarOficial] = useState(null);
     const [dolarBlue, setDolarBlue] = useState(null);
+
 
     useEffect(() => {
         if (!logueado) {
