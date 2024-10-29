@@ -20,14 +20,14 @@ const Login = () => {
                 password
             });
 
-            console.log("Respuesta del backend:", response.data); // Agregar esto
+            console.log("Respuesta del backend:", response.data);
 
             const { success, message, user } = response.data;
 
             if (success) {
                 console.log(message);
                 console.log(user);
-                login(user, response.data.token); // Cambia aquí
+                login(user, response.data.token);
                 navigate('/dashboard');
             } else {
                 setError(message);
