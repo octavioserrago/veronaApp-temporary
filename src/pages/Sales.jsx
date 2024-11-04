@@ -12,7 +12,7 @@ import ubicacion from "../assets/ubicacion.png";
 import sitioWeb from "../assets/sitio-web.png";
 import phone from "../assets/ring-phone.png";
 
-const API_URL = 'http://localhost:3333/sales';
+const API_URL = 'https://veronaappapi-temporary.onrender.com/sales';
 
 const Sales = () => {
     const { branchId, logueado, token } = useAuth();
@@ -208,12 +208,12 @@ const Sales = () => {
 
     const handleVerPlanos = async (saleId) => {
         try {
-            const detailsResponse = await axios.get(`http://localhost:3333/blueprints/sales/${saleId}`, {
+            const detailsResponse = await axios.get(`https://veronaappapi-temporary.onrender.com/blueprints/sales/${saleId}`, {
                 headers: {
                     Authorization: `Bearer ${token}`,
                 },
             });
-            const photosResponse = await axios.get(`http://localhost:3333/blueprints/sales/photos/${saleId}`, {
+            const photosResponse = await axios.get(`https://veronaappapi-temporary.onrender.com/blueprints/sales/photos/${saleId}`, {
                 headers: {
                     Authorization: `Bearer ${token}`,
                 },
@@ -248,7 +248,7 @@ const Sales = () => {
         setLoading(true);
         setErrorMessage('');
 
-        let url = `http://localhost:3333/sales/filter`;
+        let url = `https://veronaappapi-temporary.onrender.com/sales/filter`;
 
         const params = [
             filter.status ? encodeURIComponent(filter.status) : '',
@@ -297,7 +297,7 @@ const Sales = () => {
 
     const handleDescargarComprobante = async (saleId) => {
         try {
-            const response = await fetch(`http://localhost:3333/sales/${saleId}`, {
+            const response = await fetch(`https://veronaappapi-temporary.onrender.com/sales/${saleId}`, {
                 method: 'GET',
                 headers: {
                     'Authorization': `Bearer ${token}`,

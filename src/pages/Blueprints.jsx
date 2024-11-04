@@ -3,8 +3,8 @@ import Navbar from '../components/Navbar';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 
-const API_URL = 'http://localhost:3333/blueprints';
-const PHOTO_URL = 'http://localhost:3333/blueprintPhotos';
+const API_URL = 'https://veronaappapi-temporary.onrender.com/blueprints';
+const PHOTO_URL = 'https://veronaappapi-temporary.onrender.com/blueprintPhotos';
 
 const Blueprints = () => {
     const { branchId, logueado, token } = useAuth();

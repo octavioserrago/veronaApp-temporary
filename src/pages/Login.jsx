@@ -15,7 +15,7 @@ const Login = () => {
         e.preventDefault();
 
         try {
-            const response = await axios.post("http://localhost:3333/users/login", {
+            const response = await axios.post("https://veronaappapi-temporary.onrender.com/users/login", {
                 name,
                 password
             });
