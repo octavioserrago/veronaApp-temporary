@@ -9,6 +9,7 @@ const navigation = [
     { name: 'Panel de control', path: '/dashboard' },
     { name: 'Ventas', path: '/ventas' },
     { name: 'Planos', path: '/planos' },
+    //{ name: 'Crear Nuevo Perfil', path: '/crearPerfil' }
 ];
 
 function classNames(...classes) {
@@ -27,6 +28,10 @@ const Navbar = () => {
     const handleProfile = () => {
         navigate('/perfil');
     };
+
+    /*const handleCreateNewProfile = () => {
+        navigate('/newProfile');
+    };*/
 
     return (
         <Disclosure as="nav" className="bg-yellow-500">
@@ -84,6 +89,16 @@ const Navbar = () => {
                                         </button>
                                     )}
                                 </MenuItem>
+                                {/*<MenuItem>
+                                    {({ active }) => (
+                                        <button
+                                            onClick={handleCreateNewProfile}
+                                            className={classNames(active ? 'bg-gray-100' : '', 'block w-full text-left px-4 py-2 text-sm text-gray-700')}
+                                        >
+                                            Crear Nuevo usuario
+                                        </button>
+                                    )}
+                                </MenuItem>*/}
                                 <MenuItem>
                                     {({ active }) => (
                                         <button
