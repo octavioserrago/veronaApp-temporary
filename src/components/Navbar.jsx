@@ -29,9 +29,9 @@ const Navbar = () => {
         navigate('/perfil');
     };
 
-    /*const handleCreateNewProfile = () => {
+    {/*const handleCreateNewProfile = () => {
         navigate('/newProfile');
-    };*/
+    };*/}
 
     return (
         <Disclosure as="nav" className="bg-yellow-500">

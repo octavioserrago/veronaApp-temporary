@@ -1,4 +1,4 @@
-/*import React, { useState, useContext } from 'react';
+import React, { useState, useContext } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext'; // Asegúrate de que este es tu contexto de autenticación
 
@@ -110,4 +110,4 @@ const NewProfileForm = () => {
     );
 };
 
-export default NewProfileForm;*/
+export default NewProfileForm;
