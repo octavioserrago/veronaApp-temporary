@@ -6,7 +6,7 @@ import { AuthProvider } from './context/AuthContext';
 import Sales from './pages/Sales';
 import Profile from './pages/Profile';
 import Blueprints from './pages/Blueprints';
-//import NewProfileForm from './pages/NewProfileForm';
+import NewProfileForm from './pages/NewProfileForm';
 
 function App() {
   return (
@@ -18,7 +18,7 @@ function App() {
           <Route path="/ventas" element={<Sales />} />
           <Route path="/perfil" element={<Profile />} />
           <Route path="/planos" element={<Blueprints />} />
-          {/*<Route path="/newProfile" element={<NewProfileForm />} />*/}
+          <Route path="/newProfile" element={<NewProfileForm />} />
         </Routes>
       </BrowserRouter>
     </AuthProvider>

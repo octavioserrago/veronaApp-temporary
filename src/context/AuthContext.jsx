@@ -8,6 +8,7 @@ export const AuthProvider = ({ children }) => {
     const [userId, setUserId] = useState(null);
     const [user, setUser] = useState(null);
     const [token, setToken] = useState(null);
+    const [isAdmin, setIsAdmin] = useState(false);
 
     const login = (user, accessToken) => {
         setLogueado(true);
@@ -15,6 +16,7 @@ export const AuthProvider = ({ children }) => {
         setUserId(user.user_id);
         setUser(user);
         setToken(accessToken);
+        setIsAdmin(user.is_adm === 1);
     };
 
     const logout = () => {
@@ -23,10 +25,11 @@ export const AuthProvider = ({ children }) => {
         setUserId(null);
         setUser(null);
         setToken(null);
+        setIsAdmin(false);
     };
 
     return (
-        <AuthContext.Provider value={{ logueado, branchId, userId, user, token, login, logout }}>
+        <AuthContext.Provider value={{ logueado, branchId, userId, user, token, isAdmin, login, logout }}>
             {children}
         </AuthContext.Provider>
     );

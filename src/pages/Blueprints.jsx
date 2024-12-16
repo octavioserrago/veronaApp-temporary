@@ -3,8 +3,8 @@ import Navbar from '../components/Navbar';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 
-const API_URL = 'https://veronaappapi-temporary.onrender.com/blueprints';
-const PHOTO_URL = 'https://veronaappapi-temporary.onrender.com/blueprintPhotos';
+const API_URL = 'http://localhost:4000/blueprints';
+const PHOTO_URL = 'http://localhost:4000/blueprintPhotos';
 
 const Blueprints = () => {
     const { branchId, logueado, token } = useAuth();
@@ -13,7 +13,6 @@ const Blueprints = () => {
     const [formData, setFormData] = useState({
         sale_id: '',
         blueprintCode: '',
-        description: '',
         material: '',
         colour: '',
         status: '',
@@ -50,7 +49,6 @@ const Blueprints = () => {
         setFormData({
             sale_id: '',
             blueprintCode: '',
-            description: '',
             material: '',
             colour: '',
             status: '',
@@ -206,7 +204,6 @@ const Blueprints = () => {
                                     <th className="p-2">ID</th>
                                     <th className="p-2">Venta ID</th>
                                     <th className="p-2">Código</th>
-                                    <th className="p-2">Descripción</th>
                                     <th className="p-2">Material</th>
                                     <th className="p-2">Color</th>
                                     <th className="p-2">Estado</th>
@@ -219,7 +216,6 @@ const Blueprints = () => {
                                         <td className="border rounded-sm p-2">{blueprint.blueprint_id}</td>
                                         <td className="border rounded-sm p-2">{blueprint.sale_id}</td>
                                         <td className="border rounded-sm p-2">{blueprint.blueprintCode}</td>
-                                        <td className="border rounded-sm p-2">{blueprint.description}</td>
                                         <td className="border rounded-sm p-2">{blueprint.material}</td>
                                         <td className="border rounded-sm p-2">{blueprint.colour}</td>
                                         <td className="border rounded-sm p-2">{blueprint.status}</td>
@@ -255,15 +251,6 @@ const Blueprints = () => {
                                             name="blueprintCode"
                                             placeholder="Código del plano"
                                             value={formData.blueprintCode}
-                                            onChange={handleInputChange}
-                                            className="border p-2 mb-2 w-full rounded-md"
-                                            required
-                                        />
-                                        <input
-                                            type="text"
-                                            name="description"
-                                            placeholder="Descripción"
-                                            value={formData.description}
                                             onChange={handleInputChange}
                                             className="border p-2 mb-2 w-full rounded-md"
                                             required
@@ -326,15 +313,6 @@ const Blueprints = () => {
                                             name="blueprintCode"
                                             placeholder="Código del plano"
                                             value={formData.blueprintCode}
-                                            onChange={handleInputChange}
-                                            className="border p-2 mb-2 w-full rounded-md"
-                                            required
-                                        />
-                                        <input
-                                            type="text"
-                                            name="description"
-                                            placeholder="Descripción"
-                                            value={formData.description}
                                             onChange={handleInputChange}
                                             className="border p-2 mb-2 w-full rounded-md"
                                             required

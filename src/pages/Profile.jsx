@@ -8,7 +8,7 @@ const Profile = () => {
     const { user, logueado, logout, token } = useAuth();
     const navigate = useNavigate();
 
-    const API_BASE_URL = 'https://veronaappapi-temporary.onrender.com/users';
+    const API_BASE_URL = 'http://localhost:3306/users';
 
     const [newUserName, setNewUserName] = useState(user?.user_name || '');
     const [currentPassword, setCurrentPassword] = useState('');

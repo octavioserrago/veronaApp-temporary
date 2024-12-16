@@ -9,7 +9,6 @@ const navigation = [
     { name: 'Panel de control', path: '/dashboard' },
     { name: 'Ventas', path: '/ventas' },
     { name: 'Planos', path: '/planos' },
-    //{ name: 'Crear Nuevo Perfil', path: '/crearPerfil' }
 ];
 
 function classNames(...classes) {
@@ -17,7 +16,7 @@ function classNames(...classes) {
 }
 
 const Navbar = () => {
-    const { logout } = useAuth();
+    const { logout, isAdmin } = useAuth();
     const navigate = useNavigate();
 
     const handleLogout = () => {
@@ -29,9 +28,9 @@ const Navbar = () => {
         navigate('/perfil');
     };
 
-    {/*const handleCreateNewProfile = () => {
+    const handleCreateNewProfile = () => {
         navigate('/newProfile');
-    };*/}
+    };
 
     return (
         <Disclosure as="nav" className="bg-yellow-500">
@@ -64,6 +63,15 @@ const Navbar = () => {
                                         {item.name}
                                     </button>
                                 ))}
+                                {/* Mostrar "Crear Nuevo Perfil" solo si es administrador */}
+                                {isAdmin && (
+                                    <button
+                                        onClick={handleCreateNewProfile}
+                                        className="text-white-300 hover:bg-black hover:text-white rounded-md px-3 py-2 text-sm font-medium"
+                                    >
+                                        Crear Nuevo Perfil
+                                    </button>
+                                )}
                             </div>
                         </div>
                     </div>
@@ -89,16 +97,6 @@ const Navbar = () => {
                                         </button>
                                     )}
                                 </MenuItem>
-                                {/*<MenuItem>
-                                    {({ active }) => (
-                                        <button
-                                            onClick={handleCreateNewProfile}
-                                            className={classNames(active ? 'bg-gray-100' : '', 'block w-full text-left px-4 py-2 text-sm text-gray-700')}
-                                        >
-                                            Crear Nuevo usuario
-                                        </button>
-                                    )}
-                                </MenuItem>*/}
                                 <MenuItem>
                                     {({ active }) => (
                                         <button
@@ -130,6 +128,15 @@ const Navbar = () => {
                             {item.name}
                         </DisclosureButton>
                     ))}
+                    {/* Mostrar "Crear Nuevo Perfil" solo si es administrador en la versión móvil */}
+                    {isAdmin && (
+                        <DisclosureButton
+                            onClick={handleCreateNewProfile}
+                            className="block rounded-md px-3 py-2 text-base font-medium text-white-300 hover:bg-black hover:text-white"
+                        >
+                            Crear Nuevo Perfil
+                        </DisclosureButton>
+                    )}
                 </div>
             </DisclosurePanel>
         </Disclosure>
