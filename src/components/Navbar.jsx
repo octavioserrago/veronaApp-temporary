@@ -32,6 +32,10 @@ const Navbar = () => {
         navigate('/newProfile');
     };
 
+    const handleUserManagement = () => {
+        navigate('/usersABM');
+    };
+
     return (
         <Disclosure as="nav" className="bg-yellow-500">
             <div className="mx-auto max-w-7xl px-2 sm:px-6 lg:px-8">
@@ -63,14 +67,22 @@ const Navbar = () => {
                                         {item.name}
                                     </button>
                                 ))}
-                                {/* Mostrar "Crear Nuevo Perfil" solo si es administrador */}
+                                {/* Mostrar "Crear Nuevo Perfil" y "Gestión de Usuarios" solo si es administrador */}
                                 {isAdmin && (
-                                    <button
-                                        onClick={handleCreateNewProfile}
-                                        className="text-white-300 hover:bg-black hover:text-white rounded-md px-3 py-2 text-sm font-medium"
-                                    >
-                                        Crear Nuevo Perfil
-                                    </button>
+                                    <>
+                                        <button
+                                            onClick={handleCreateNewProfile}
+                                            className="text-white-300 hover:bg-black hover:text-white rounded-md px-3 py-2 text-sm font-medium"
+                                        >
+                                            Crear Nuevo Perfil
+                                        </button>
+                                        <button
+                                            onClick={handleUserManagement}
+                                            className="text-white-300 hover:bg-black hover:text-white rounded-md px-3 py-2 text-sm font-medium"
+                                        >
+                                            Gestión de Usuarios
+                                        </button>
+                                    </>
                                 )}
                             </div>
                         </div>
@@ -103,7 +115,7 @@ const Navbar = () => {
                                             onClick={handleLogout}
                                             className={classNames(active ? 'bg-gray-100' : '', 'block w-full text-left px-4 py-2 text-sm text-gray-700')}
                                         >
-                                            Cerrar Sesion
+                                            Cerrar Sesión
                                         </button>
                                     )}
                                 </MenuItem>
@@ -128,14 +140,22 @@ const Navbar = () => {
                             {item.name}
                         </DisclosureButton>
                     ))}
-                    {/* Mostrar "Crear Nuevo Perfil" solo si es administrador en la versión móvil */}
+                    {/* Mostrar botones adicionales solo si es administrador en la versión móvil */}
                     {isAdmin && (
-                        <DisclosureButton
-                            onClick={handleCreateNewProfile}
-                            className="block rounded-md px-3 py-2 text-base font-medium text-white-300 hover:bg-black hover:text-white"
-                        >
-                            Crear Nuevo Perfil
-                        </DisclosureButton>
+                        <>
+                            <DisclosureButton
+                                onClick={handleCreateNewProfile}
+                                className="block rounded-md px-3 py-2 text-base font-medium text-white-300 hover:bg-black hover:text-white"
+                            >
+                                Crear Nuevo Perfil
+                            </DisclosureButton>
+                            <DisclosureButton
+                                onClick={handleUserManagement}
+                                className="block rounded-md px-3 py-2 text-base font-medium text-white-300 hover:bg-black hover:text-white"
+                            >
+                                Gestión de Usuarios
+                            </DisclosureButton>
+                        </>
                     )}
                 </div>
             </DisclosurePanel>

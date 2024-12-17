@@ -21,12 +21,12 @@ const NewProfileForm = () => {
         }
     }, [logueado, navigate]);
 
-    // Manejar cambios en los campos del formulario
+  
     const handleInputChange = ({ target: { name, value } }) => {
         setFormData((prevData) => ({ ...prevData, [name]: value }));
     };
 
-    // Enviar el formulario
+
     const handleSubmit = async (e) => {
         e.preventDefault();
 
@@ -44,7 +44,7 @@ const NewProfileForm = () => {
 
             if (response.ok) {
                 setNotification({ message: 'Usuario creado exitosamente!', type: 'success' });
-                // Opcional: Redirigir o limpiar el formulario
+                
                 setFormData({ user_name: '', password: '', branch_id: '', is_admin: '0' });
             } else {
                 setNotification({ message: data.message || 'Error al crear el usuario.', type: 'error' });
@@ -98,7 +98,7 @@ const NewProfileForm = () => {
                         />
                     </div>
 
-                    {/* Campo para el rol (Administrador o no) */}
+             
                     <div className="mb-4">
                         <label htmlFor="is_admin" className="block text-sm font-medium text-gray-700">Rol</label>
                         <select

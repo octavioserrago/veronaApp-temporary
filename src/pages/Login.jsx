@@ -14,49 +14,49 @@ const Login = () => {
     const handlerLogin = async (e) => {
         e.preventDefault();
 
-        // Depuración: Mostrar los datos enviados al backend
+
         console.log('Datos enviados al backend:', { name, password });
 
         try {
-            // Realizamos la solicitud de login
+        
             const response = await axios.post("http://localhost:4000/users/login", {
                 name,
                 password
             });
 
-            // Depuración: Mostrar respuesta completa del backend
+          
             console.log("Respuesta completa del backend:", response);
             console.log("Datos de la respuesta del backend:", response.data);
 
-            // Revisamos la respuesta y tomamos acción según el resultado
+         
             const { success, message, user } = response.data;
 
             if (success) {
                 console.log("Login exitoso:", message);
                 console.log("Usuario:", user);
 
-                // Iniciamos sesión en el contexto y redirigimos al dashboard
+               
                 login(user, response.data.token);
                 navigate('/dashboard');
             } else {
-                // Si no es exitoso, mostramos el mensaje de error
+               
                 setError(message);
                 console.log("Mensaje de error desde el servidor:", message);
             }
         } catch (error) {
             console.error("Error en la solicitud de login:", error);
 
-            // Manejo de errores detallado para distintos tipos de errores
+         
             if (error.response) {
-                // Si la respuesta tiene un error (por ejemplo, 401)
+               
                 console.error("Detalles del error de respuesta:", error.response);
                 setError(error.response.data.message || 'Error en la autenticación');
             } else if (error.request) {
-                // Si la solicitud no recibe respuesta del servidor
+              
                 console.error("La solicitud no recibió respuesta:", error.request);
                 setError('No se pudo conectar al servidor');
             } else {
-                // Otros errores (por ejemplo, de configuración)
+           
                 console.error("Error desconocido:", error.message);
                 setError('Error interno del servidor');
             }

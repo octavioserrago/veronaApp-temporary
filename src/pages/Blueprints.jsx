@@ -34,7 +34,7 @@ const Blueprints = () => {
         setModalType(type);
         setFormData({
             ...formData,
-            ...blueprint // Cargar datos existentes si se está modificando un plano
+            ...blueprint 
         });
         setIsModalOpen(true);
     };

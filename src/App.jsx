@@ -7,6 +7,7 @@ import Sales from './pages/Sales';
 import Profile from './pages/Profile';
 import Blueprints from './pages/Blueprints';
 import NewProfileForm from './pages/NewProfileForm';
+import UsersABM from './pages/UsersABM';
 
 function App() {
   return (
@@ -19,6 +20,7 @@ function App() {
           <Route path="/perfil" element={<Profile />} />
           <Route path="/planos" element={<Blueprints />} />
           <Route path="/newProfile" element={<NewProfileForm />} />
+          <Route path="/usersABM" element={<UsersABM />} />
         </Routes>
       </BrowserRouter>
     </AuthProvider>
